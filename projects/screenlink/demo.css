@@ -1,0 +1,418 @@
+/* ScreenLink Demo — embedded version for CV space zone */
+.sl-demo * { margin: 0; padding: 0; box-sizing: border-box; }
+
+.sl-demo {
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.sl-demo .devices {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 24px;
+  position: relative;
+}
+
+.sl-demo .device { position: relative; }
+
+.sl-demo .device-label {
+  text-align: center;
+  font-size: 0.6em;
+  color: #555;
+  margin-top: 6px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Monitor */
+.sl-demo .monitor-screen {
+  width: 280px; height: 175px;
+  background: #111;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 1px rgba(255,255,255,0.1);
+  border: 2px solid #222;
+}
+.sl-demo .monitor-stand {
+  width: 50px; height: 22px;
+  background: linear-gradient(180deg, #1a1a1a, #111);
+  margin: 0 auto;
+  border-radius: 0 0 2px 2px;
+}
+.sl-demo .monitor-base {
+  width: 80px; height: 5px;
+  background: #1a1a1a;
+  margin: 0 auto;
+  border-radius: 3px;
+}
+
+/* Laptop */
+.sl-demo .laptop-screen {
+  width: 200px; height: 125px;
+  background: #111;
+  border-radius: 5px 5px 0 0;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4), inset 0 0 1px rgba(255,255,255,0.1);
+  border: 2px solid #222;
+  border-bottom: none;
+}
+.sl-demo .laptop-hinge {
+  width: 216px; height: 3px;
+  background: linear-gradient(90deg, #1a1a1a, #2a2a2a, #1a1a1a);
+  margin: 0 auto;
+  border-radius: 0 0 2px 2px;
+}
+.sl-demo .laptop-base {
+  width: 224px; height: 7px;
+  background: linear-gradient(180deg, #222, #1a1a1a);
+  margin: 0 auto;
+  border-radius: 0 0 5px 5px;
+}
+.sl-demo .macbook-base { background: linear-gradient(180deg, #2a2a2a, #1f1f1f); }
+
+/* Screen content */
+.sl-demo .screen-content {
+  width: 100%; height: 100%;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s ease;
+}
+
+/* Linux Desktop */
+.sl-demo .linux-desktop {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  position: relative;
+}
+.sl-demo .kde-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 20px;
+  background: rgba(20, 20, 30, 0.95);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.sl-demo .panel-left { flex: 0; margin-right: 6px; }
+.sl-demo .panel-icon { font-size: 9px; opacity: 0.7; cursor: pointer; }
+.sl-demo .panel-center { flex: 1; display: flex; gap: 3px; }
+.sl-demo .panel-taskbar-item {
+  font-size: 6px; padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.05);
+  color: #aaa;
+}
+.sl-demo .panel-taskbar-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+.sl-demo .panel-right { display: flex; align-items: center; gap: 5px; }
+.sl-demo .panel-clock { font-size: 6px; color: #aaa; }
+
+.sl-demo .screenlink-tray {
+  position: relative;
+  color: #aaa;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.sl-demo .screenlink-tray:hover { background: rgba(255,255,255,0.1); }
+.sl-demo .tray-dot {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #4CAF50;
+}
+
+/* Floating window */
+.sl-demo .floating-window {
+  position: absolute;
+  top: 16px; left: 20px;
+  width: 180px; height: 100px;
+  background: #1e1e2e;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.sl-demo .window-titlebar {
+  height: 16px;
+  background: rgba(30,30,40,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.sl-demo .window-title { font-size: 6px; color: #999; }
+.sl-demo .window-controls { display: flex; gap: 3px; }
+.sl-demo .win-btn { width: 6px; height: 6px; border-radius: 50%; }
+.sl-demo .win-btn.close { background: #e74c3c; }
+.sl-demo .win-btn.maximize { background: #f39c12; }
+.sl-demo .win-btn.minimize { background: #2ecc71; }
+.sl-demo .terminal-body {
+  padding: 5px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 5.5px;
+  line-height: 1.6;
+  color: #ccc;
+}
+.sl-demo .terminal-line .prompt { color: #7c4dff; }
+.sl-demo .terminal-line.dim { color: #666; }
+.sl-demo .terminal-line.dim.green { color: #4CAF50; }
+.sl-demo .sl-cursor { animation: sl-blink 1s infinite; }
+@keyframes sl-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+/* macOS Desktop */
+.sl-demo .mac-desktop {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #2c1445 0%, #4a1942 30%, #1a3a5c 100%);
+  position: relative;
+  transition: all 0.5s ease;
+}
+.sl-demo .mac-menubar {
+  height: 14px;
+  background: rgba(30,30,30,0.8);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 6px;
+}
+.sl-demo .apple-logo { font-size: 8px; margin-right: 6px; }
+.sl-demo .menubar-text { color: #ddd; font-weight: 500; }
+.sl-demo .menubar-right { margin-left: auto; color: #aaa; }
+.sl-demo .mac-dock {
+  position: absolute;
+  bottom: 4px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  background: rgba(255,255,255,0.08);
+  padding: 3px 6px;
+  border-radius: 6px;
+}
+.sl-demo .dock-icon { font-size: 10px; }
+
+/* Windows Desktop */
+.sl-demo .windows-desktop {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #0a2463 0%, #1e3a6e 50%, #2d5aa0 100%);
+  position: relative;
+  transition: all 0.5s ease;
+}
+.sl-demo .windows-taskbar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 18px;
+  background: rgba(20, 20, 30, 0.95);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.sl-demo .win-start { font-size: 9px; color: #0078d4; margin-right: 8px; }
+.sl-demo .taskbar-text { font-size: 6px; color: #aaa; }
+.sl-demo .taskbar-time { font-size: 6px; color: #aaa; margin-left: auto; }
+
+/* Extended overlay */
+.sl-demo .extended-overlay {
+  position: absolute; inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease;
+}
+.sl-demo .extended-content {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  position: relative;
+}
+.sl-demo .extended-badge {
+  position: absolute;
+  top: 6px; right: 6px;
+  font-size: 5px;
+  color: rgba(76, 175, 80, 0.8);
+  background: rgba(76, 175, 80, 0.1);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  letter-spacing: 0.5px;
+}
+.sl-demo .extended-window {
+  position: absolute;
+  background: #1e1e2e;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.sl-demo .ext-win-titlebar {
+  height: 12px;
+  background: rgba(30,30,40,0.95);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  gap: 2px;
+}
+.sl-demo .ext-win-dot { width: 4px; height: 4px; border-radius: 50%; }
+.sl-demo .ext-win-body {
+  padding: 3px;
+  font-size: 4.5px;
+  color: #888;
+  font-family: monospace;
+  line-height: 1.4;
+}
+
+/* Remote overlay */
+.sl-demo .remote-overlay-indicator {
+  position: absolute;
+  font-size: 5px;
+  color: rgba(33, 150, 243, 0.9);
+  background: rgba(33, 150, 243, 0.1);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(33, 150, 243, 0.2);
+  z-index: 10;
+}
+
+/* Widget popup */
+.sl-demo .widget-popup {
+  position: absolute;
+  bottom: 70px; left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  width: 220px;
+  background: #1e1e2e;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 100;
+  text-align: left;
+}
+.sl-demo .widget-popup.visible {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: all;
+}
+.sl-demo .widget-header {
+  padding: 8px 10px 4px;
+  display: flex;
+  align-items: center;
+}
+.sl-demo .widget-title { font-size: 10px; font-weight: 600; color: #ddd; }
+.sl-demo .widget-section-label {
+  font-size: 7px; color: #666;
+  padding: 3px 10px 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sl-demo .widget-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  gap: 6px;
+  border-radius: 5px;
+  margin: 1px 3px;
+  transition: background 0.15s;
+  cursor: default;
+}
+.sl-demo .widget-item:hover { background: rgba(255,255,255,0.05); }
+.sl-demo .widget-item-icon { font-size: 13px; width: 20px; text-align: center; flex-shrink: 0; }
+.sl-demo .widget-item-info { flex: 1; min-width: 0; }
+.sl-demo .widget-item-name {
+  font-size: 8px; color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sl-demo .widget-item-detail { font-size: 6.5px; color: #666; }
+.sl-demo .widget-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sl-demo .widget-status-dot.online { background: #4CAF50; }
+.sl-demo .widget-status-dot.offline { background: #f44336; }
+.sl-demo .widget-mode-btn {
+  font-size: 7px; color: #bbb;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sl-demo .widget-mode-btn:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+.sl-demo .widget-mode-btn.disabled { opacity: 0.3; pointer-events: none; }
+.sl-demo .widget-separator { height: 1px; background: rgba(255,255,255,0.06); margin: 3px 10px; }
+.sl-demo .widget-footer { padding: 5px 10px 7px; display: flex; gap: 3px; }
+.sl-demo .widget-footer-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sl-demo .widget-footer-btn:hover { background: rgba(255,255,255,0.08); color: #aaa; }
+
+.sl-demo .widget-status { font-size: 7px; padding: 2px 5px; border-radius: 3px; margin-left: auto; }
+.sl-demo .widget-status.offline { color: #f44336; background: rgba(244, 67, 54, 0.1); }
+.sl-demo .widget-status.online { color: #4CAF50; background: rgba(76, 175, 80, 0.1); }
+.sl-demo .disconnected-label { color: #f44336 !important; }
+
+/* Connection lines */
+.sl-demo .connection-lines { width: 100%; height: 35px; margin-top: -15px; }
+
+/* Peripherals */
+.sl-demo .peripherals {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.sl-demo .keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  background: linear-gradient(180deg, #1a1a1a, #111);
+  border-radius: 3px;
+  border: 1px solid #2a2a2a;
+}
+.sl-demo .kb-row { display: flex; gap: 2px; justify-content: center; }
+.sl-demo .key {
+  width: 8px; height: 7px;
+  background: #252525;
+  border-radius: 1.5px;
+  border: 1px solid #333;
+}
+.sl-demo .key.spacebar { width: 40px; height: 7px; }
+.sl-demo .mouse { margin-top: 2px; }
+.sl-demo .mouse-body {
+  width: 15px; height: 24px;
+  background: linear-gradient(180deg, #1a1a1a, #111);
+  border-radius: 8px;
+  border: 1px solid #2a2a2a;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.sl-demo .mouse-wheel { width: 3px; height: 5px; background: #333; border-radius: 2px; margin-top: 4px; }
+
+.sl-demo .hint {
+  font-size: 0.7em;
+  color: #555;
+  font-style: italic;
+  margin-top: 6px;
+}
