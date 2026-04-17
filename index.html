@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;500;600;700&family=Public+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
+  <script>history.scrollRestoration = 'manual'; window.scrollTo(0, 0);</script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script type="importmap">
     { "imports": { "three": "https://unpkg.com/three@0.170.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/" } }
@@ -1242,6 +1243,69 @@
       .mindmap-info-desc { font-size: 0.8rem; }
     }
 
+    /* Space zone swipe hint — mobile only */
+    .space-swipe-hint {
+      display: none;
+      position: fixed;
+      bottom: 4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .space-zone-wrapper.active .space-swipe-hint { opacity: 1; }
+
+    /* Mindmap mobile exit button — hidden by default */
+    .mm-exit-btn {
+      display: none;
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--accent-dim);
+      border-radius: 8px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mm-exit-btn:active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent);
+    }
+
+    /* Mindmap fullscreen — activated by .mm-fullscreen class */
+    .mindmap-section.mm-fullscreen {
+      padding: 0 !important;
+      min-height: auto !important;
+    }
+    .mindmap-section.mm-fullscreen .mindmap-canvas-wrap {
+      position: fixed !important;
+      inset: 0 !important;
+      max-width: none !important;
+      aspect-ratio: unset !important;
+      border-radius: 0 !important;
+      z-index: 75;
+      background: var(--bg-void);
+    }
+    .mindmap-section.mm-fullscreen .mindmap-canvas { border-radius: 0 !important; }
+    .mindmap-section.mm-fullscreen .mindmap-hint { bottom: 4.5rem; }
+    .mindmap-section.mm-fullscreen .mm-exit-btn { display: flex !important; }
+
     /* ============================================================
        MOBILE TOUCH CONTROLS (3D finale)
        ============================================================ */
@@ -1369,6 +1433,15 @@
 
       /* Article modal — bottom close button */
       .mobile-close-btn { display: flex !important; }
+
+      /* Space zone — bigger nav dots + swipe hint */
+      .space-nav-dot { width: 14px; height: 14px; }
+      .space-nav-dot.active { transform: scale(1.3); }
+      .space-nav { gap: 1rem; bottom: 1.5rem; }
+      .space-scroll-hint { display: none !important; }
+      .space-swipe-hint { display: block !important; }
+
+      /* (mindmap fullscreen rules moved to global scope) */
     }
     @media (max-width: 480px) {
       .contact-row { gap: 1rem; }
@@ -2083,6 +2156,7 @@
       <div class="space-nav-dot" data-index="3"></div>
     </div>
     <div class="space-scroll-hint" id="spaceScrollHint">Scroll to explore &rarr;</div>
+    <div class="space-swipe-hint">Swipe to explore &larr; &rarr;</div>
   </div>
 
   <!-- Article Modal -->
@@ -2293,8 +2367,12 @@
         <div class="mindmap-info-desc" id="mindmapInfoDesc"></div>
       </div>
       <div class="mindmap-hint" id="mindmapHint">
-        Hover models to explore &nbsp;&bull;&nbsp; Drag to orbit &nbsp;&bull;&nbsp; Alt + Scroll to zoom &nbsp;&bull;&nbsp; Right-drag to pan
+        Hover models to explore &nbsp;&bull;&nbsp; Drag to orbit &nbsp;&bull;&nbsp; Scroll to zoom &nbsp;&bull;&nbsp; Right-drag to pan
       </div>
+      <button class="mm-exit-btn" id="mmMobileExit">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        Continue to the finale
+      </button>
     </div>
   </section>
 
@@ -2502,7 +2580,10 @@
        ============================================================ -->
   <script src="projects/screenlink/demo.js"></script>
   <script>
-    // ── Init ──
+    // ── Init — always start at top on load/reload ──
+    history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
@@ -2747,9 +2828,34 @@
       }, 3000);
     }
 
-    // ── Space navigation via scroll ──
+    // ── Space navigation via scroll + swipe ──
     let spaceScrollAccum = 0;
     const SPACE_SCROLL_THRESHOLD = 120;
+
+    // Swipe support for mobile
+    let spaceTouchStartX = 0;
+    let spaceTouchStartY = 0;
+    spaceWrapper.addEventListener('touchstart', (e) => {
+      if (!spaceActive) return;
+      spaceTouchStartX = e.touches[0].clientX;
+      spaceTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    spaceWrapper.addEventListener('touchend', (e) => {
+      if (!spaceActive) return;
+      const dx = e.changedTouches[0].clientX - spaceTouchStartX;
+      const dy = e.changedTouches[0].clientY - spaceTouchStartY;
+      // Only trigger if horizontal swipe is dominant
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0 && spaceCurrentPanel < spacePanels.length - 1) {
+          spaceCurrentPanel++;
+          showSpacePanel(spaceCurrentPanel);
+        } else if (dx > 0 && spaceCurrentPanel > 0) {
+          spaceCurrentPanel--;
+          showSpacePanel(spaceCurrentPanel);
+        }
+      }
+    }, { passive: true });
 
     spaceWrapper.addEventListener('wheel', (e) => {
       if (!spaceActive) return;
@@ -3055,20 +3161,25 @@
       },
     ];
 
-    // ── Background preloader — staggered, non-blocking ──
+    // ── Background preloader — staggered, desktop only ──
     const preloadCache = {};
     window.__preloadCache = preloadCache;
 
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+
     async function preloadStaggered() {
-      // Prioritize smaller finale models first, then mindmap models
+      // Skip blob preloading on mobile — saves memory, FBXLoader fetches directly
+      if (isMobile) return;
+
       const queue = [
         'Idle.fbx', 'Running.fbx', 'Jump.fbx', 'Standing Greeting.fbx', 'Talking.fbx',
         ...INDUSTRIES.map(i => i.path),
       ];
 
-      // Load 2 at a time to avoid network saturation
-      for (let i = 0; i < queue.length; i += 2) {
-        const batch = queue.slice(i, i + 2);
+      // Load 1 at a time on smaller screens, 2 on desktop
+      const batchSize = window.innerWidth < 1024 ? 1 : 2;
+      for (let i = 0; i < queue.length; i += batchSize) {
+        const batch = queue.slice(i, i + batchSize);
         await Promise.allSettled(
           batch.map(url =>
             fetch(url)
@@ -3118,9 +3229,9 @@
 
       mmRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
       mmRenderer.setSize(w, h);
-      mmRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      mmRenderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
       mmRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-      mmRenderer.toneMappingExposure = 1.6;
+      mmRenderer.toneMappingExposure = 2.2;
 
       mmClock = new THREE.Clock();
 
@@ -3129,36 +3240,26 @@
       mmControls.enableDamping = true;
       mmControls.dampingFactor = 0.08;
       mmControls.enablePan = true;
-      mmControls.enableZoom = false; // disabled — we handle Ctrl+scroll manually
+      mmControls.enableZoom = true;
       mmControls.minDistance = 5;
       mmControls.maxDistance = 25;
       mmControls.maxPolarAngle = Math.PI / 2.1;
       mmControls.target.set(0, 2.5, -2);
       mmControls.update();
 
-      // Alt+scroll = zoom (normal scroll passes through to page)
-      canvas.addEventListener('wheel', (e) => {
-        if (e.altKey) {
-          e.preventDefault();
-          const zoomSpeed = 0.5;
-          const direction = e.deltaY > 0 ? 1 : -1;
-          const distance = mmCamera.position.distanceTo(mmControls.target);
-          const newDist = THREE.MathUtils.clamp(distance + direction * zoomSpeed, 5, 25);
-          const dir = mmCamera.position.clone().sub(mmControls.target).normalize();
-          mmCamera.position.copy(mmControls.target).addScaledVector(dir, newDist);
-          mmControls.update();
-        }
-      }, { passive: false });
+      // Lights — bright enough to see everything clearly
+      mmScene.add(new THREE.AmbientLight(0xddddee, 2.0));
+      mmScene.add(new THREE.HemisphereLight(0xccddff, 0x336655, 1.0));
 
-      // Lights
-      mmScene.add(new THREE.AmbientLight(0xccddee, 1.2));
-      mmScene.add(new THREE.HemisphereLight(0xaabbdd, 0x224444, 0.6));
-
-      const main = new THREE.DirectionalLight(0xffeedd, 1.5);
+      const main = new THREE.DirectionalLight(0xffeedd, 2.2);
       main.position.set(4, 8, 6);
       mmScene.add(main);
 
-      const rim = new THREE.DirectionalLight(0x34D399, 0.5);
+      const front = new THREE.DirectionalLight(0xffffff, 1.0);
+      front.position.set(0, 5, 10);
+      mmScene.add(front);
+
+      const rim = new THREE.DirectionalLight(0x34D399, 0.8);
       rim.position.set(-4, 4, -3);
       mmScene.add(rim);
 
@@ -3457,25 +3558,14 @@
           mmActive = true;
           animateMindmap();
 
-          checkTriggerIntroPan();
-
           mmPreloadObserver.disconnect();
         }
       }
     }, { threshold: 0.1 });
     mmPreloadObserver.observe(mmSection);
 
-    // ── Phase 2: Trigger intro pan when bottom of canvas is fully visible ──
+    // ── Phase 2: Intro pan starts when fullscreen activates ──
     let mmPanTriggered = false;
-
-    function checkTriggerIntroPan() {
-      if (mmPanTriggered || !mmReadyToPlay) return;
-      const rect = wrapEl.getBoundingClientRect();
-      // Bottom of canvas is above the bottom of viewport
-      if (rect.bottom <= window.innerHeight + 50) {
-        startIntroPan();
-      }
-    }
 
     function startIntroPan() {
       if (mmPanTriggered) return;
@@ -3486,13 +3576,8 @@
       if (mmControls) mmControls.enabled = false;
     }
 
-    // Check on scroll
+    // Check on scroll — only for scroll lock during loading
     window.addEventListener('scroll', () => {
-      if (!mmPanTriggered && mmReadyToPlay) {
-        checkTriggerIntroPan();
-      }
-      // Scroll lock: if models are still loading and user scrolled to the section bottom,
-      // prevent scrolling past into the finale
       if (mmLoading && mmInitStarted) {
         const rect = mmSection.getBoundingClientRect();
         if (rect.bottom < window.innerHeight + 100) {
@@ -3500,6 +3585,42 @@
         }
       }
     }, { passive: false });
+
+    // ── Mobile: fullscreen mindmap + exit button ──
+    const mmMobileExit = document.getElementById('mmMobileExit');
+    let mmFullscreen = false;
+
+    // Go fullscreen once models finish loading (both mobile and desktop)
+    const mmReadyCheck = setInterval(() => {
+      const mmRect = mmSection.getBoundingClientRect();
+      const mmCenter = mmRect.top + mmRect.height / 2;
+      const viewCenter = window.innerHeight / 2;
+      const isVisible = mmCenter > 0 && mmCenter < window.innerHeight && Math.abs(mmCenter - viewCenter) < window.innerHeight * 0.3;
+      if (mmReadyToPlay && isVisible) {
+        clearInterval(mmReadyCheck);
+        mmFullscreen = true;
+        mmSection.classList.add('mm-fullscreen');
+        document.body.style.overflow = 'hidden';
+
+        // Resize renderer to fullscreen
+        if (mmRenderer) {
+          mmRenderer.setSize(window.innerWidth, window.innerHeight);
+          mmCamera.aspect = window.innerWidth / window.innerHeight;
+          mmCamera.updateProjectionMatrix();
+        }
+
+        // Start the 360 intro pan now that we're fullscreen
+        setTimeout(() => startIntroPan(), 300);
+      }
+    }, 500);
+
+    mmMobileExit.addEventListener('click', () => {
+      mmFullscreen = false;
+      mmSection.classList.remove('mm-fullscreen');
+
+      // Trigger finale
+      window.__finaleFromMindmap = true;
+    });
   </script>
 
   <!-- ============================================================
@@ -3576,7 +3697,8 @@
 
       renderer = new THREE.WebGLRenderer({ canvas: finaleCanvas, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      const _isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 1.5 : 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -4147,12 +4269,21 @@
     function checkFinale() {
       if (finaleTriggered) return;
       if (document.body.classList.contains('in-space')) return;
-      // Don't trigger until mindmap has fully loaded and started its intro
+
+      // Mobile: triggered by "Continue to the finale" button only
+      if (window.__finaleFromMindmap) {
+        window.__finaleFromMindmap = false;
+        finaleTriggered = true;
+        startFinale();
+        return;
+      }
+
+      // Block desktop path while mindmap is fullscreen on mobile
+      if (document.querySelector('.mm-fullscreen')) return;
+
+      // Desktop: trigger when mindmap scrolls past
       if (!window.__mindmapReady) return;
-
       const mmRect = mindmapEl.getBoundingClientRect();
-
-      // Fire when mindmap bottom is within top 40% of viewport
       if (mmRect.bottom < window.innerHeight * 0.4 && mmRect.bottom > -500) {
         finaleTriggered = true;
         startFinale();
@@ -4160,6 +4291,8 @@
     }
 
     window.addEventListener('scroll', checkFinale, { passive: true });
+    // Also poll for mobile button trigger (no scroll event fires when locked)
+    setInterval(checkFinale, 500);
   </script>
 
 </body>
