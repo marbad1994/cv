@@ -2292,7 +2292,9 @@
         <div class="mindmap-info-period" id="mindmapInfoPeriod"></div>
         <div class="mindmap-info-desc" id="mindmapInfoDesc"></div>
       </div>
-      <div class="mindmap-hint" id="mindmapHint">Hover to explore industries</div>
+      <div class="mindmap-hint" id="mindmapHint">
+        Hover models to explore &nbsp;&bull;&nbsp; Drag to orbit &nbsp;&bull;&nbsp; Alt + Scroll to zoom &nbsp;&bull;&nbsp; Right-drag to pan
+      </div>
     </div>
   </section>
 
@@ -3122,17 +3124,31 @@
 
       mmClock = new THREE.Clock();
 
-      // Orbit controls — zoom and pan
+      // Orbit controls — zoom requires Ctrl+scroll, drag to orbit, right-drag to pan
       mmControls = new OrbitControls(mmCamera, canvas);
       mmControls.enableDamping = true;
       mmControls.dampingFactor = 0.08;
       mmControls.enablePan = true;
-      mmControls.enableZoom = true;
+      mmControls.enableZoom = false; // disabled — we handle Ctrl+scroll manually
       mmControls.minDistance = 5;
       mmControls.maxDistance = 25;
       mmControls.maxPolarAngle = Math.PI / 2.1;
       mmControls.target.set(0, 2.5, -2);
       mmControls.update();
+
+      // Alt+scroll = zoom (normal scroll passes through to page)
+      canvas.addEventListener('wheel', (e) => {
+        if (e.altKey) {
+          e.preventDefault();
+          const zoomSpeed = 0.5;
+          const direction = e.deltaY > 0 ? 1 : -1;
+          const distance = mmCamera.position.distanceTo(mmControls.target);
+          const newDist = THREE.MathUtils.clamp(distance + direction * zoomSpeed, 5, 25);
+          const dir = mmCamera.position.clone().sub(mmControls.target).normalize();
+          mmCamera.position.copy(mmControls.target).addScaledVector(dir, newDist);
+          mmControls.update();
+        }
+      }, { passive: false });
 
       // Lights
       mmScene.add(new THREE.AmbientLight(0xccddee, 1.2));
@@ -3464,6 +3480,7 @@
     function startIntroPan() {
       if (mmPanTriggered) return;
       mmPanTriggered = true;
+      window.__mindmapReady = true;
       mmIntroPanning = true;
       mmIntroAngle = 0;
       if (mmControls) mmControls.enabled = false;
@@ -4130,10 +4147,12 @@
     function checkFinale() {
       if (finaleTriggered) return;
       if (document.body.classList.contains('in-space')) return;
+      // Don't trigger until mindmap has fully loaded and started its intro
+      if (!window.__mindmapReady) return;
 
       const mmRect = mindmapEl.getBoundingClientRect();
 
-      // Fire when mindmap bottom is within top 40% of viewport (still partially visible)
+      // Fire when mindmap bottom is within top 40% of viewport
       if (mmRect.bottom < window.innerHeight * 0.4 && mmRect.bottom > -500) {
         finaleTriggered = true;
         startFinale();
