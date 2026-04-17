@@ -1,0 +1,4299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marcus — The Chronicle</title>
+  <meta name="description" content="Not a CV. A story. The chronicle of Marcus — developer, creator, builder.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;500;600;700&family=Public+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <script>history.scrollRestoration = 'manual'; window.scrollTo(0, 0);</script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.170.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/" } }
+  </script>
+  <script src="http://localhost:5000/iframe/chatbot.js"></script>
+  <!-- ScreenLink Demo -->
+  <link rel="stylesheet" href="projects/screenlink/demo.css">
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --bg-void: #09090B;
+      --bg-deep: #0C0C0F;
+      --bg-surface: #131318;
+      --bg-elevated: #1A1A22;
+      --bg-glass: rgba(19, 19, 24, 0.75);
+
+      --text-primary: #EEEEF0;
+      --text-secondary: #9898A0;
+      --text-muted: #5A5A66;
+      --text-accent: #34D399;
+
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.15);
+      --accent-bright: #34D399;
+      --accent-dim: #065F46;
+
+      --orange: #F59E0B;
+      --blue: #3B82F6;
+      --rose: #F43F5E;
+      --violet: #8B5CF6;
+      --red-alert: #EF4444;
+
+      --font-heading: 'Libre Bodoni', Georgia, serif;
+      --font-body: 'Public Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+      --z-background: -1;
+      --z-content: 10;
+      --z-nav: 50;
+      --z-overlay: 60;
+      --z-alert: 70;
+      --z-cursor: 100;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-dim) var(--bg-void);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+      cursor: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--accent); color: var(--bg-void); }
+    a { color: var(--accent-bright); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--text-primary); }
+
+    /* ============================================================
+       CUSTOM CURSOR
+       ============================================================ */
+    .cursor {
+      position: fixed; top: 0; left: 0;
+      width: 20px; height: 20px;
+      border: 1.5px solid var(--accent-bright);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: var(--z-cursor);
+      transition: width 0.3s var(--ease-out-expo), height 0.3s var(--ease-out-expo), border-color 0.3s, background 0.3s;
+      mix-blend-mode: difference;
+      transform: translate(-50%, -50%);
+    }
+    .cursor.hovering { width: 50px; height: 50px; background: rgba(52, 211, 153, 0.1); border-color: var(--text-primary); }
+    .cursor-dot {
+      position: fixed; top: 0; left: 0;
+      width: 5px; height: 5px;
+      background: var(--accent-bright);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: var(--z-cursor);
+      transform: translate(-50%, -50%);
+    }
+
+    /* ============================================================
+       FILM GRAIN
+       ============================================================ */
+    .grain {
+      position: fixed; inset: 0;
+      z-index: var(--z-overlay);
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px;
+    }
+
+    /* ============================================================
+       SCROLL PROGRESS
+       ============================================================ */
+    .scroll-progress {
+      position: fixed; top: 0; left: 0;
+      width: 0%; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+      z-index: var(--z-nav);
+      transition: width 0.1s linear;
+    }
+
+    /* ============================================================
+       CHAPTER NAV (side)
+       ============================================================ */
+    .chapter-nav {
+      position: fixed; right: 2rem; top: 50%;
+      transform: translateY(-50%);
+      z-index: var(--z-nav);
+      display: flex; flex-direction: column;
+      gap: 1.25rem; align-items: flex-end;
+    }
+    .chapter-nav a {
+      display: flex; align-items: center; gap: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      text-decoration: none;
+      transition: color 0.3s, gap 0.3s var(--ease-out-expo);
+      cursor: none;
+    }
+    .chapter-nav a:hover, .chapter-nav a.active { color: var(--accent-bright); }
+    .chapter-nav a .label {
+      opacity: 0; transform: translateX(8px);
+      transition: opacity 0.3s, transform 0.3s var(--ease-out-expo);
+      white-space: nowrap;
+    }
+    .chapter-nav a:hover .label, .chapter-nav a.active .label { opacity: 1; transform: translateX(0); }
+    .chapter-nav a .pip {
+      width: 6px; height: 6px;
+      background: var(--text-muted); border-radius: 50%;
+      transition: background 0.3s, transform 0.3s var(--ease-out-expo);
+      flex-shrink: 0;
+    }
+    .chapter-nav a:hover .pip, .chapter-nav a.active .pip { background: var(--accent-bright); transform: scale(1.6); }
+
+    /* Hide chapter-nav during space zone */
+    body.in-space .chapter-nav { opacity: 0; pointer-events: none; }
+
+    /* ============================================================
+       AMBIENT ORBS
+       ============================================================ */
+    .orbs { position: fixed; inset: 0; z-index: var(--z-background); overflow: hidden; pointer-events: none; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; animation: float 20s infinite ease-in-out; }
+    .orb-1 { width: 600px; height: 600px; background: var(--accent); top: -200px; left: -100px; }
+    .orb-2 { width: 500px; height: 500px; background: var(--violet); bottom: -150px; right: -100px; animation-delay: -7s; }
+    .orb-3 { width: 400px; height: 400px; background: var(--blue); top: 50%; left: 50%; animation-delay: -14s; }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(80px, -60px) scale(1.1); }
+      50% { transform: translate(-40px, 80px) scale(0.95); }
+      75% { transform: translate(60px, 40px) scale(1.05); }
+    }
+
+    /* ============================================================
+       CHAPTER BASE
+       ============================================================ */
+    .chapter {
+      min-height: 100vh; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      padding: 6rem 2rem;
+    }
+    .chapter-inner { max-width: 900px; width: 100%; position: relative; z-index: var(--z-content); }
+    .chapter-number {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    /* ============================================================
+       REVEAL SYSTEM
+       ============================================================ */
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
+
+    .reveal-left { opacity: 0; transform: translateX(-60px); transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo); }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(60px); transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo); }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+    .reveal-scale { opacity: 0; transform: scale(0.9); transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo); }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+    /* ============================================================
+       HERO
+       ============================================================ */
+    .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+    .hero-eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; opacity: 0; animation: fadeUp 1s var(--ease-out-expo) 0.5s forwards; }
+    .hero h1 { font-family: var(--font-heading); font-size: clamp(3.5rem, 10vw, 8rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 1.5rem; }
+    .hero h1 .line { display: block; overflow: hidden; }
+    .hero h1 .line-inner { display: block; opacity: 0; transform: translateY(100%); animation: lineReveal 1.2s var(--ease-out-expo) forwards; }
+    .hero h1 .line:nth-child(1) .line-inner { animation-delay: 0.7s; }
+    .hero h1 .line:nth-child(2) .line-inner { animation-delay: 0.9s; }
+    .hero h1 .line:nth-child(3) .line-inner { animation-delay: 1.1s; }
+    .hero-subtitle { font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 300; color: var(--text-secondary); max-width: 550px; line-height: 1.7; opacity: 0; animation: fadeUp 1s var(--ease-out-expo) 1.5s forwards; }
+    .hero-cta-group { display: flex; gap: 1rem; margin-top: 3rem; opacity: 0; animation: fadeUp 1s var(--ease-out-expo) 1.8s forwards; }
+    .hero-scroll-hint { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.75rem; opacity: 0; animation: fadeUp 1s var(--ease-out-expo) 2.5s forwards; }
+    .hero-scroll-hint span { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); }
+    .scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, var(--accent), transparent); animation: scrollPulse 2s ease-in-out infinite; }
+
+    @keyframes lineReveal { to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scrollPulse { 0%, 100% { opacity: 0.3; transform: scaleY(0.6); } 50% { opacity: 1; transform: scaleY(1); } }
+
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.8rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; border: none; border-radius: 4px; cursor: none; transition: all 0.25s var(--ease-out-expo); text-decoration: none; }
+    .btn-primary { background: var(--accent); color: var(--bg-void); }
+    .btn-primary:hover { background: var(--accent-bright); color: var(--bg-void); transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--bg-elevated); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent-bright); transform: translateY(-2px); }
+
+    /* ============================================================
+       CHAPTER HEADINGS / TEXT
+       ============================================================ */
+    .chapter-heading { font-family: var(--font-heading); font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--text-primary); margin-bottom: 2rem; }
+    .chapter-heading .accent { color: var(--accent-bright); font-style: italic; }
+    .chapter-text { font-size: 1.1rem; font-weight: 300; color: var(--text-secondary); line-height: 1.8; max-width: 680px; }
+    .chapter-text + .chapter-text { margin-top: 1.5rem; }
+    .highlight-quote { border-left: 2px solid var(--accent); padding: 1.5rem 0 1.5rem 2rem; margin: 3rem 0; font-family: var(--font-heading); font-size: clamp(1.3rem, 3vw, 1.8rem); font-style: italic; color: var(--text-primary); line-height: 1.5; }
+
+    /* ============================================================
+       SKILLS GRID
+       ============================================================ */
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 3rem; }
+    .skill-card { background: var(--bg-surface); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 1.75rem; position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.3s var(--ease-out-expo), box-shadow 0.3s; cursor: none; }
+    .skill-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--accent-glow), transparent 60%); opacity: 0; transition: opacity 0.4s; }
+    .skill-card:hover { border-color: rgba(52,211,153,0.2); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+    .skill-card:hover::before { opacity: 1; }
+    .skill-card-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin-bottom: 1.25rem; position: relative; z-index: 1; }
+    .skill-card-icon svg { width: 20px; height: 20px; }
+    .skill-card h3 { font-family: var(--font-body); font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; position: relative; z-index: 1; }
+    .skill-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; position: relative; z-index: 1; }
+    .skill-card .skill-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; position: relative; z-index: 1; }
+    .skill-tag { font-family: var(--font-mono); font-size: 0.65rem; padding: 0.2rem 0.6rem; border-radius: 3px; background: rgba(255,255,255,0.04); color: var(--text-muted); letter-spacing: 0.05em; }
+
+    .icon-green { background: rgba(16,185,129,0.12); color: var(--accent-bright); }
+    .icon-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .icon-violet { background: rgba(139,92,246,0.12); color: var(--violet); }
+    .icon-orange { background: rgba(245,158,11,0.12); color: var(--orange); }
+    .icon-rose { background: rgba(244,63,94,0.12); color: var(--rose); }
+
+    /* ============================================================
+       RED ALERT OVERLAY
+       ============================================================ */
+    .red-alert {
+      position: fixed; inset: 0;
+      z-index: var(--z-alert);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .red-alert.active { opacity: 1; }
+
+    .red-alert-vignette {
+      position: absolute; inset: 0;
+      box-shadow: inset 0 0 200px 60px rgba(239, 68, 68, 0.25);
+      animation: alertPulse 0.8s ease-in-out infinite;
+    }
+    .red-alert-scanline {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(239, 68, 68, 0.03) 2px,
+        rgba(239, 68, 68, 0.03) 4px
+      );
+    }
+    .red-alert-text {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--red-alert);
+      opacity: 0;
+      animation: alertTextBlink 0.6s ease-in-out infinite;
+    }
+    .red-alert.active .red-alert-text { opacity: 1; }
+
+    @keyframes alertPulse {
+      0%, 100% { box-shadow: inset 0 0 200px 60px rgba(239, 68, 68, 0.15); }
+      50% { box-shadow: inset 0 0 200px 80px rgba(239, 68, 68, 0.35); }
+    }
+    @keyframes alertTextBlink {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* ============================================================
+       SPACE ZONE — THE STRATOSPHERE
+       ============================================================ */
+    .space-zone-wrapper {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: var(--z-alert);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+      overflow: hidden;
+      background: var(--bg-void);
+    }
+    .space-zone-wrapper.active {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .space-zone {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      display: flex;
+      align-items: stretch;
+      transition: transform 2.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Starfield canvas */
+    .starfield {
+      position: fixed; inset: 0;
+      z-index: -1;
+    }
+
+    /* Speed lines during launch */
+    .speed-lines {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 2;
+      transition: opacity 0.3s;
+    }
+    .speed-lines.active { opacity: 1; }
+    .speed-line {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      animation: speedLine 0.6s linear infinite;
+    }
+    @keyframes speedLine {
+      from { transform: translateX(100vw); }
+      to { transform: translateX(-200vw); }
+    }
+
+    /* Space project islands */
+    .space-panel {
+      width: 100vw; height: 100%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .space-project {
+      max-width: 1000px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    }
+    .space-project.visible { opacity: 1; transform: scale(1); }
+
+    .space-project-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .space-project-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .space-project-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+    .space-project-desc {
+      font-size: 0.95rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .space-project-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .space-project-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted);
+    }
+    .space-project-detail {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .space-project-detail strong {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .space-project-demo {
+      background: var(--bg-surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    .space-project-demo-inner {
+      padding: 1.5rem;
+    }
+
+    /* ============================================================
+       SCREENLINK ARTICLE MODE
+       ============================================================ */
+
+    /* Initial: transparent demo card, laptops hidden */
+    .space-panel.article-panel .space-project-demo {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+    }
+    .space-panel.article-panel .sl-demo .device.laptop {
+      opacity: 0;
+      max-width: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition: opacity 0.8s var(--ease-out-expo) 0.3s,
+                  max-width 0.8s var(--ease-out-expo),
+                  transform 0.8s var(--ease-out-expo) 0.3s;
+    }
+    .space-panel.article-panel .sl-demo .device.laptop.left { transform: translateX(40px) scale(0.8); }
+    .space-panel.article-panel .sl-demo .device.laptop.right { transform: translateX(-40px) scale(0.8); }
+    .space-panel.article-panel .sl-demo .connection-lines { opacity: 0; transition: opacity 0.8s 0.5s; }
+    .space-panel.article-panel .sl-demo .peripherals { opacity: 0; transition: opacity 0.6s; }
+
+    /* Article content — hidden in panel, shown in modal */
+    .space-panel .space-article {
+      display: none;
+    }
+    .space-article {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .space-article h4 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1rem;
+      line-height: 1.3;
+    }
+    .space-article p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 1.25rem;
+      font-weight: 300;
+    }
+    .space-article p strong { color: var(--text-primary); font-weight: 500; }
+    .space-article code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.05);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      color: var(--accent-bright);
+    }
+    .space-article .article-divider {
+      width: 40px; height: 1px;
+      background: var(--bg-elevated);
+      margin: 2.5rem 0;
+    }
+    .article-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+    .article-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      text-decoration: none;
+      transition: border-color 0.25s, color 0.25s, background 0.25s, transform 0.2s var(--ease-out-expo);
+      cursor: none;
+    }
+    .article-link:hover {
+      border-color: var(--accent);
+      color: var(--accent-bright);
+      background: rgba(16, 185, 129, 0.06);
+      transform: translateY(-2px);
+    }
+    .article-link svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── ARTICLE MODAL ── */
+    .article-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: #29272766;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s var(--ease-out-expo);
+      overflow-y: auto;
+      padding: 3rem 2rem 4rem;
+    }
+    .article-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .article-modal-inner {
+      max-width: 900px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(40px) scale(0.97);
+      transition: opacity 0.6s var(--ease-out-expo) 0.2s,
+                  transform 0.8s var(--ease-out-expo) 0.2s;
+    }
+    .article-modal.active .article-modal-inner {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .article-modal-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .article-modal-header .space-project-eyebrow { margin-bottom: 0; }
+    .article-modal-header .space-project-title { margin-bottom: 0.5rem; }
+    .article-modal-header .space-project-desc {
+      max-width: 650px;
+      text-align: center;
+    }
+    .article-modal-header .space-project-stack { justify-content: center; }
+
+    /* Demo inside modal — full width, laptops visible, no card styling */
+    .article-modal-demo {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto 2rem;
+    }
+    .article-modal-demo .space-project-demo {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
+    .article-modal-demo .sl-demo .device.laptop {
+      opacity: 1 !important;
+      max-width: 300px !important;
+      overflow: visible !important;
+      transform: none !important;
+      pointer-events: auto !important;
+    }
+    .article-modal-demo .sl-demo .connection-lines { opacity: 1 !important; }
+    .article-modal-demo .sl-demo .peripherals { opacity: 1 !important; }
+
+    /* Close button */
+    .article-modal-close {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      cursor: none;
+      transition: all 0.25s var(--ease-out-expo);
+      z-index: 85;
+      opacity: 0;
+      transition: opacity 0.4s 0.6s, background 0.25s, border-color 0.25s, color 0.25s, transform 0.25s;
+    }
+    .article-modal.active .article-modal-close { opacity: 1; }
+    .article-modal-close:hover {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: var(--rose);
+      color: var(--rose);
+      transform: rotate(90deg);
+    }
+
+    /* Test Demo button */
+    .btn-test-demo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid var(--accent-dim);
+      border-radius: 5px;
+      background: rgba(16, 185, 129, 0.06);
+      color: var(--accent-bright);
+      cursor: none;
+      transition: all 0.3s var(--ease-out-expo);
+      position: relative;
+    }
+    .btn-test-demo:hover {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--accent);
+      transform: scale(1.05);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+    .btn-test-demo svg { transition: transform 0.3s var(--ease-out-expo); }
+    .btn-test-demo:hover svg { transform: rotate(90deg) scale(1.1); }
+
+    /* Demo expanded state — full viewport takeover */
+    .space-panel.demo-expanded .space-project {
+      grid-template-columns: 1fr !important;
+      max-width: 100%;
+      gap: 0;
+    }
+    .space-panel.demo-expanded .space-project-info {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      opacity: 0;
+      transform: translateX(-150px);
+      pointer-events: none;
+      transition: opacity 0.8s var(--ease-out-expo), transform 1s var(--ease-out-expo);
+      z-index: -1;
+    }
+    .space-panel.demo-expanded .space-project-demo {
+      position: relative;
+      width: 90vw;
+      max-width: 1200px;
+      border-radius: 20px;
+      border-color: rgba(52, 211, 153, 0.15);
+      box-shadow: 0 0 80px rgba(16, 185, 129, 0.08), 0 30px 100px rgba(0,0,0,0.5);
+      animation: demoExpand 1.2s var(--ease-out-expo) forwards;
+    }
+    .space-panel.demo-expanded .space-project-demo-inner {
+      padding: 2rem;
+    }
+
+    /* Close demo button */
+    .btn-close-demo {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      cursor: none;
+      transition: all 0.25s var(--ease-out-expo);
+      z-index: 20;
+      opacity: 0;
+      animation: fadeUp 0.4s var(--ease-out-expo) 0.6s forwards;
+    }
+    .btn-close-demo:hover {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: var(--rose);
+      color: var(--rose);
+      transform: rotate(90deg);
+    }
+
+    /* Dramatic glow ring during expand */
+    .space-panel.demo-expanded .space-project-demo::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 22px;
+      background: conic-gradient(from 0deg, transparent 0%, var(--accent) 25%, transparent 50%, var(--accent-bright) 75%, transparent 100%);
+      opacity: 0.15;
+      animation: demoGlowSpin 4s linear infinite;
+      z-index: -1;
+    }
+    @keyframes demoGlowSpin { to { transform: rotate(360deg); } }
+
+    @keyframes demoExpand {
+      0% { transform: scale(0.7); opacity: 0; }
+      40% { opacity: 1; }
+      70% { transform: scale(1.03); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Shockwave ring when demo opens */
+    .demo-shockwave {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 0; height: 0;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+    }
+    .demo-shockwave.active {
+      animation: shockwave 1.2s var(--ease-out-expo) forwards;
+    }
+    @keyframes shockwave {
+      0% { width: 0; height: 0; opacity: 0.8; border-width: 4px; }
+      100% { width: 150vmax; height: 150vmax; opacity: 0; border-width: 1px; }
+    }
+
+    /* Placeholder demo box */
+    .demo-placeholder {
+      height: 350px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .demo-placeholder svg { opacity: 0.3; }
+
+    /* Navigation dots for space zone */
+    .space-nav {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.75rem;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .space-zone-wrapper.active .space-nav { opacity: 1; }
+    .space-nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      cursor: none;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .space-nav-dot.active { background: var(--accent-bright); transform: scale(1.4); }
+
+    /* Scroll hint in space zone */
+    .space-scroll-hint {
+      position: fixed;
+      bottom: 4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 5;
+    }
+    .space-zone-wrapper.active .space-scroll-hint { opacity: 1; }
+
+    /* Teleport button */
+    .btn-teleport {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 1rem 2.2rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--accent-bright);
+      cursor: none;
+      transition: all 0.3s var(--ease-out-expo);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-teleport:hover {
+      background: var(--accent);
+      color: var(--bg-void);
+      box-shadow: 0 0 40px var(--accent-glow), 0 0 80px rgba(16, 185, 129, 0.08);
+      transform: scale(1.05);
+    }
+    .btn-teleport::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 8px;
+      background: conic-gradient(from 0deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      animation: teleportGlow 2s linear infinite;
+      z-index: -1;
+    }
+    .btn-teleport:hover::before { opacity: 0.3; }
+    @keyframes teleportGlow { to { transform: rotate(360deg); } }
+
+    /* Teleport flash */
+    .teleport-flash {
+      position: fixed; inset: 0;
+      background: white;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease-out;
+    }
+    .teleport-flash.active {
+      opacity: 1;
+      transition: opacity 0.08s;
+    }
+
+    /* ============================================================
+       TIMELINE
+       ============================================================ */
+    .timeline { position: relative; margin-top: 3rem; }
+    .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, var(--accent-dim), var(--accent), var(--accent-dim), transparent); }
+    .timeline-item { position: relative; padding-left: 3rem; padding-bottom: 3.5rem; }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot { position: absolute; left: -5px; top: 0.4rem; width: 11px; height: 11px; border-radius: 50%; background: var(--bg-void); border: 2px solid var(--accent); transition: background 0.3s, box-shadow 0.3s; }
+    .timeline-item:hover .timeline-dot { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+    .timeline-date { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .timeline-title { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .timeline-company { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+    .timeline-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 580px; }
+
+    /* ============================================================
+       CONTACT — FLASHY ICONS
+       ============================================================ */
+    .contact-row {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .contact-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-secondary);
+      cursor: none;
+      transition: transform 0.3s var(--ease-out-expo), color 0.3s;
+      padding: 1.5rem;
+    }
+    .contact-card:hover {
+      color: var(--text-primary);
+      transform: translateY(-6px);
+    }
+    .contact-card-icon {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.4s var(--ease-out-expo), background 0.3s;
+    }
+    .contact-card-icon svg { width: 26px; height: 26px; }
+    .contact-card-icon.icon-mail {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-bright);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+    .contact-card:hover .icon-mail { box-shadow: 0 0 30px rgba(16, 185, 129, 0.25); }
+    .contact-card-icon.icon-github {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .contact-card:hover .icon-github { box-shadow: 0 0 30px rgba(255, 255, 255, 0.1); }
+    .contact-card-icon.icon-linkedin {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--blue);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+    }
+    .contact-card:hover .icon-linkedin { box-shadow: 0 0 30px rgba(59, 130, 246, 0.25); }
+    .contact-card-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* ============================================================
+       ROLLING CREDITS
+       ============================================================ */
+    .credits-wrapper {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      height: 360px;
+    }
+    .credits-wrapper::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, var(--bg-void), transparent);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .credits-wrapper::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to top, var(--bg-void), transparent);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .credits-roll {
+      animation: creditsRoll 30s linear infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      text-align: center;
+      padding-top: 320px;
+    }
+    .credits-roll:hover { animation-play-state: paused; }
+    @keyframes creditsRoll {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-50%); }
+    }
+    .credit-section {
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+    .credit-role {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+    .credit-name {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .credit-detail {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+    .credit-divider {
+      width: 20px; height: 1px;
+      background: var(--bg-elevated);
+      margin: 1.5rem auto;
+    }
+    .credits-final {
+      margin-top: 2rem;
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       3D FINALE — THE RUN
+       ============================================================ */
+    .finale-wrapper {
+      position: fixed; inset: 0;
+      z-index: var(--z-alert);
+      background: #050507;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease-out;
+    }
+    .finale-wrapper.active { opacity: 1; pointer-events: auto; }
+
+    .finale-canvas { position: absolute; inset: 0; }
+
+    .finale-subtitle {
+      position: absolute;
+      bottom: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-heading);
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-style: italic;
+      color: var(--text-primary);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.8s;
+      pointer-events: none;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+      max-width: 600px;
+      line-height: 1.5;
+    }
+    .finale-subtitle.visible { opacity: 1; }
+
+    .finale-controls {
+      position: absolute;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.6s;
+      pointer-events: none;
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .finale-controls.visible { opacity: 1; }
+    .finale-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .finale-loader {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      z-index: 10;
+    }
+    .finale-loader-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+    .finale-loader-bar {
+      width: 200px; height: 2px;
+      background: var(--bg-elevated);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .finale-loader-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    /* Dark fade-to-contact overlay */
+    .finale-blackout {
+      position: absolute; inset: 0;
+      background: var(--bg-void);
+      opacity: 0;
+      transition: opacity 2s ease-in;
+      pointer-events: none;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .finale-blackout.active { opacity: 1; }
+    .finale-final-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1.5rem, 4vw, 2.8rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+      line-height: 1.3;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1.2s var(--ease-out-expo) 1.5s, transform 1.2s var(--ease-out-expo) 1.5s;
+    }
+    .finale-blackout.active .finale-final-text {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .finale-final-text .accent { color: var(--accent-bright); font-style: italic; }
+
+    /* ============================================================
+       3D MINDMAP — Industry Experience
+       ============================================================ */
+    .mindmap-section {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+    }
+    .mindmap-canvas-wrap {
+      width: 100%;
+      max-width: 1300px;
+      aspect-ratio: 16 / 9;
+      position: relative;
+      margin: 0 auto;
+    }
+    .mindmap-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      display: block;
+    }
+    .mindmap-info {
+      position: absolute;
+      pointer-events: auto;
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      max-width: 300px;
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+      transition: opacity 0.35s var(--ease-out-expo), transform 0.35s var(--ease-out-expo);
+      z-index: 20;
+    }
+    .mindmap-info.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .mindmap-info-title {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+    .mindmap-info-period {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .mindmap-info-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+    .mindmap-hint {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+    .mindmap-hint.visible { opacity: 1; }
+
+    @media (max-width: 768px) {
+      .mindmap-canvas-wrap { aspect-ratio: 4 / 3; }
+      .mindmap-info { max-width: 240px; padding: 1rem 1.25rem; }
+      .mindmap-info-title { font-size: 0.95rem; }
+      .mindmap-info-desc { font-size: 0.8rem; }
+    }
+
+    /* Space zone swipe hint — mobile only */
+    .space-swipe-hint {
+      display: none;
+      position: fixed;
+      bottom: 4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .space-zone-wrapper.active .space-swipe-hint { opacity: 1; }
+
+    /* Mindmap mobile exit button — hidden by default */
+    .mm-exit-btn {
+      display: none;
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--accent-dim);
+      border-radius: 8px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mm-exit-btn:active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent);
+    }
+
+    /* Mindmap fullscreen — activated by .mm-fullscreen class */
+    .mindmap-section.mm-fullscreen {
+      padding: 0 !important;
+      min-height: auto !important;
+    }
+    .mindmap-section.mm-fullscreen .mindmap-canvas-wrap {
+      position: fixed !important;
+      inset: 0 !important;
+      max-width: none !important;
+      aspect-ratio: unset !important;
+      border-radius: 0 !important;
+      z-index: 75;
+      background: var(--bg-void);
+    }
+    .mindmap-section.mm-fullscreen .mindmap-canvas { border-radius: 0 !important; }
+    .mindmap-section.mm-fullscreen .mindmap-hint { bottom: 4.5rem; }
+    .mindmap-section.mm-fullscreen .mm-exit-btn { display: flex !important; }
+
+    /* ============================================================
+       MOBILE TOUCH CONTROLS (3D finale)
+       ============================================================ */
+    .mobile-touch-controls {
+      display: none;
+      position: absolute;
+      bottom: 1.5rem;
+      left: 0; right: 0;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 1.5rem;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+    .mobile-touch-controls.visible { opacity: 1; }
+    .mobile-touch-controls > * { pointer-events: auto; }
+
+    .touch-dpad {
+      display: grid;
+      grid-template-columns: 50px 50px 50px;
+      grid-template-rows: 50px 50px;
+      gap: 4px;
+    }
+    .touch-btn {
+      width: 50px; height: 50px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .touch-btn:active { background: rgba(16, 185, 129, 0.2); border-color: var(--accent); }
+    .touch-btn-jump {
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--violet);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .touch-btn-jump:active { background: rgba(139, 92, 246, 0.3); border-color: var(--violet); }
+
+    /* ============================================================
+       MOBILE CLOSE BUTTON (article modal)
+       ============================================================ */
+    .mobile-close-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 400px;
+      margin: 3rem auto 0;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.25s, color 0.25s;
+    }
+    .mobile-close-btn:active {
+      border-color: var(--accent);
+      color: var(--accent-bright);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 1024px) {
+      .chapter-nav { display: none; }
+      .space-project { grid-template-columns: 1fr; gap: 1.5rem; }
+      .space-panel.demo-expanded .space-project-demo { width: 95vw; }
+    }
+    @media (max-width: 768px) {
+      .chapter { padding: 4rem 1.25rem; }
+      .skills-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: clamp(2.5rem, 12vw, 4rem); }
+      .cursor, .cursor-dot { display: none; }
+      body { cursor: auto; }
+      .btn, .contact-link, .skill-card, .btn-teleport, .btn-test-demo, .btn-close-demo, .article-modal-close, .mobile-close-btn { cursor: pointer; }
+      .hero-cta-group { flex-direction: column; align-items: center; }
+      .space-project { grid-template-columns: 1fr; }
+
+      /* Space panels — scrollable on mobile */
+      .space-panel {
+        padding: 1rem;
+        overflow-y: auto;
+        align-items: flex-start;
+        padding-top: 2.5rem;
+        padding-bottom: 5rem;
+      }
+      .space-project {
+        gap: 1.25rem;
+        align-items: start;
+      }
+      .space-project-title { font-size: 1.5rem; }
+      .space-project-desc { font-size: 0.85rem; }
+      .space-project-detail { font-size: 0.8rem; }
+
+      /* Mobile touch controls for 3D finale */
+      .mobile-touch-controls { display: flex !important; }
+      .finale-controls { display: none !important; }
+
+      /* Article modal — bottom close button */
+      .mobile-close-btn { display: flex !important; }
+
+      /* Space zone — bigger nav dots + swipe hint */
+      .space-nav-dot { width: 14px; height: 14px; }
+      .space-nav-dot.active { transform: scale(1.3); }
+      .space-nav { gap: 1rem; bottom: 1.5rem; }
+      .space-scroll-hint { display: none !important; }
+      .space-swipe-hint { display: block !important; }
+
+      /* (mindmap fullscreen rules moved to global scope) */
+    }
+    @media (max-width: 480px) {
+      .contact-row { gap: 1rem; }
+      .contact-card { padding: 1rem; }
+      .contact-card-icon { width: 50px; height: 50px; }
+      .chapter { padding: 3rem 1rem; }
+    }
+
+    /* ============================================================
+       REDUCED MOTION
+       ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1; transform: none; }
+      .hero h1 .line-inner, .hero-eyebrow, .hero-subtitle, .hero-cta-group, .hero-scroll-hint { opacity: 1; transform: none; }
+      .orb { animation: none; }
+      .scroll-line { animation: none; opacity: 0.5; }
+      .red-alert-vignette { animation: none; }
+      .red-alert-text { animation: none; opacity: 1; }
+      .space-project { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Atmosphere -->
+  <div class="grain"></div>
+  <div class="orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Red Alert Overlay -->
+  <div class="red-alert" id="redAlert">
+    <div class="red-alert-vignette"></div>
+    <div class="red-alert-scanline"></div>
+    <div class="red-alert-text" id="alertText">Launching</div>
+  </div>
+
+  <!-- Teleport Flash -->
+  <div class="teleport-flash" id="teleportFlash"></div>
+
+  <!-- Demo Shockwave -->
+  <div class="demo-shockwave" id="demoShockwave"></div>
+
+  <!-- Space Zone -->
+  <div class="space-zone-wrapper" id="spaceZoneWrapper">
+    <canvas class="starfield" id="starfield"></canvas>
+    <div class="speed-lines" id="speedLines"></div>
+
+    <div class="space-zone" id="spaceZone">
+
+      <!-- Space Panel 1: ScreenLink -->
+      <div class="space-panel article-panel" data-project="0">
+        <div class="space-project">
+          <div class="space-project-info">
+            <div class="space-project-eyebrow">Project 01 &mdash; Featured</div>
+            <h3 class="space-project-title">ScreenLink</h3>
+            <p class="space-project-desc">
+              Turn your laptops into extra monitors for your Linux desktop &mdash;
+              and get remote control of each machine from a single keyboard and mouse.
+              No special hardware. No proprietary software. Just your existing computers.
+            </p>
+            <div class="space-project-stack">
+              <span class="space-project-tag">Python</span>
+              <span class="space-project-tag">WebSocket</span>
+              <span class="space-project-tag">TigerVNC</span>
+              <span class="space-project-tag">noVNC</span>
+              <span class="space-project-tag">X11</span>
+              <span class="space-project-tag">KDE Plasma</span>
+            </div>
+            <p class="space-project-detail">
+              <strong>The insight:</strong> NVIDIA GPUs expose disconnected DisplayPort outputs that can be
+              force-enabled via Xorg config. Chain that with x0vncserver clipping, WebSocket proxy, and a
+              browser in kiosk mode &mdash; and a MacBook becomes your second monitor.
+            </p>
+            <p class="space-project-detail">
+              <strong>Zero custom rendering.</strong> The entire system is an orchestration layer over existing
+              open-source tools. Knowing <em>which</em> tools to chain together, and <em>how</em> &mdash;
+              that was the actual engineering.
+            </p>
+            <div>
+              <button class="btn-test-demo" onclick="expandArticle(this.closest('.space-panel'))">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Play demo to unlock the full article
+              </button>
+            </div>
+          </div>
+          <div class="space-project-demo">
+            <button class="btn-close-demo" onclick="collapseDemo(this.closest('.space-panel'))" style="display:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="space-project-demo-inner">
+              <!-- ScreenLink interactive demo embedded here -->
+              <div class="sl-demo" id="screenlinkDemo">
+                <div class="devices">
+                  <!-- Windows Laptop -->
+                  <div class="device laptop left">
+                    <div class="laptop-screen">
+                      <div class="screen-content" id="sl-left-screen">
+                        <div class="desktop windows-desktop">
+                          <div class="windows-taskbar">
+                            <span class="win-start">&#x229E;</span>
+                            <span class="taskbar-text">Windows 11</span>
+                            <span class="taskbar-time">14:46</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="laptop-base"></div>
+                    <div class="laptop-hinge"></div>
+                    <div class="device-label">Windows Laptop</div>
+                  </div>
+
+                  <!-- Linux Desktop -->
+                  <div class="device desktop center" id="sl-desktop-device">
+                    <div class="monitor-screen">
+                      <div class="screen-content" id="sl-center-screen">
+                        <div class="desktop linux-desktop">
+                          <div class="kde-panel">
+                            <div class="panel-left"><span class="panel-icon">&#x2630;</span></div>
+                            <div class="panel-center">
+                              <div class="panel-taskbar-item active">Files</div>
+                              <div class="panel-taskbar-item">Terminal</div>
+                            </div>
+                            <div class="panel-right">
+                              <div class="screenlink-tray" id="sl-tray-icon">
+                                <svg width="12" height="12" viewBox="0 0 14 14">
+                                  <rect x="1" y="2" width="5" height="4" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+                                  <rect x="8" y="2" width="5" height="4" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+                                  <rect x="4" y="8" width="6" height="4" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+                                  <line x1="3.5" y1="6" x2="7" y2="8" stroke="currentColor" stroke-width="0.7"/>
+                                  <line x1="10.5" y1="6" x2="7" y2="8" stroke="currentColor" stroke-width="0.7"/>
+                                </svg>
+                                <div class="tray-dot" id="sl-tray-dot"></div>
+                              </div>
+                              <span class="panel-clock">14:46</span>
+                            </div>
+                          </div>
+                          <div class="floating-window">
+                            <div class="window-titlebar">
+                              <span class="window-title">Terminal</span>
+                              <div class="window-controls">
+                                <span class="win-btn minimize"></span>
+                                <span class="win-btn maximize"></span>
+                                <span class="win-btn close"></span>
+                              </div>
+                            </div>
+                            <div class="terminal-body">
+                              <div class="terminal-line"><span class="prompt">marcus@desktop:~$</span> <span class="sl-cursor">_</span></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="monitor-stand"></div>
+                    <div class="monitor-base"></div>
+                    <div class="device-label">Linux Desktop</div>
+
+                    <div class="peripherals">
+                      <div class="keyboard">
+                        <div class="kb-row"><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div></div>
+                        <div class="kb-row"><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div></div>
+                        <div class="kb-row"><div class="key spacebar"></div></div>
+                      </div>
+                      <div class="mouse"><div class="mouse-body"><div class="mouse-wheel"></div></div></div>
+                    </div>
+
+                    <!-- Widget popup -->
+                    <div class="widget-popup" id="sl-widget-popup">
+                      <div class="widget-header">
+                        <span class="widget-title">ScreenLink</span>
+                        <span class="widget-status" id="sl-widget-status">Offline</span>
+                      </div>
+                      <div class="widget-section-label">Host</div>
+                      <div class="widget-item">
+                        <div class="widget-item-icon">&#x1F5A5;</div>
+                        <div class="widget-item-info">
+                          <div class="widget-item-name">Desktop PC</div>
+                          <div class="widget-item-detail">Linux &mdash; 1920x1080 &mdash; Ethernet</div>
+                        </div>
+                        <div class="widget-status-dot" id="sl-host-dot"></div>
+                      </div>
+                      <div class="widget-separator"></div>
+                      <div class="widget-section-label">Clients</div>
+                      <div class="widget-item">
+                        <div class="widget-item-icon">&#x1F4BB;</div>
+                        <div class="widget-item-info">
+                          <div class="widget-item-name" id="sl-mac-mode-label">Disconnected</div>
+                          <div class="widget-item-detail">MacBook Air &mdash; 1440x900</div>
+                        </div>
+                        <button class="widget-mode-btn disabled" id="sl-mac-toggle"><span id="sl-mac-btn-text">&mdash;</span></button>
+                      </div>
+                      <div class="widget-item">
+                        <div class="widget-item-icon">&#x1F4BB;</div>
+                        <div class="widget-item-info">
+                          <div class="widget-item-name" id="sl-win-mode-label">Disconnected</div>
+                          <div class="widget-item-detail">Windows Laptop &mdash; 1920x1080</div>
+                        </div>
+                        <button class="widget-mode-btn disabled" id="sl-win-toggle"><span id="sl-win-btn-text">&mdash;</span></button>
+                      </div>
+                      <div class="widget-separator"></div>
+                      <div class="widget-footer">
+                        <button class="widget-footer-btn" id="sl-start-btn" title="Start">&#x25B6;</button>
+                        <button class="widget-footer-btn" id="sl-stop-btn" title="Stop">&#x25A0;</button>
+                        <button class="widget-footer-btn" id="sl-restart-btn" title="Restart">&#x21BB;</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- MacBook -->
+                  <div class="device laptop right">
+                    <div class="laptop-screen">
+                      <div class="screen-content" id="sl-right-screen">
+                        <div class="desktop mac-desktop">
+                          <div class="mac-menubar">
+                            <span class="apple-logo">&#xF8FF;</span>
+                            <span class="menubar-text">Finder</span>
+                            <span class="menubar-right">14:46</span>
+                          </div>
+                          <div class="mac-dock">
+                            <div class="dock-icon">&#x1F4C1;</div>
+                            <div class="dock-icon">&#x1F310;</div>
+                            <div class="dock-icon">&#x2709;</div>
+                            <div class="dock-icon">&#x1F3B5;</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="laptop-base macbook-base"></div>
+                    <div class="laptop-hinge"></div>
+                    <div class="device-label">MacBook Air</div>
+                  </div>
+                </div>
+
+                <svg class="connection-lines" viewBox="0 0 1000 35" preserveAspectRatio="none">
+                  <path d="M 200 18 Q 350 4 500 18" stroke="rgba(76,175,80,0)" stroke-width="2" fill="none" stroke-dasharray="6 4" id="sl-line-left"/>
+                  <path d="M 500 18 Q 650 4 800 18" stroke="rgba(76,175,80,0)" stroke-width="2" fill="none" stroke-dasharray="6 4" id="sl-line-right"/>
+                </svg>
+                <p class="hint">Click the ScreenLink icon in the taskbar, then press &#x25B6; to connect</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Article — revealed after demo unlock -->
+          <div class="space-article">
+            <div class="article-divider"></div>
+
+            <h4>The problem it solves</h4>
+            <p>
+              Multi-monitor setups are great until you travel, work from home with different machines,
+              or simply don't want to buy dedicated monitors. Most people already own a laptop or two
+              collecting dust on the desk. ScreenLink makes them useful.
+            </p>
+            <p>
+              Existing solutions either cost money (Duet Display, Luna Display), require specific hardware
+              (DisplayLink adapters), only work within one OS ecosystem (Sidecar for Mac-only, Miracast for
+              Windows-only), or are clunky research projects that never quite work. Nothing existed that was
+              <strong>free, cross-platform, and actually let you extend a Linux desktop</strong> to both
+              macOS and Windows machines simultaneously.
+            </p>
+
+            <h4>How it works</h4>
+            <p>
+              The architecture is deceptively simple &mdash; it chains together proven open-source tools
+              rather than reinventing screen capture and streaming from scratch.
+            </p>
+            <p>
+              One of the core insights came from a 10-year-old forum post: NVIDIA GPUs expose disconnected DisplayPort
+              outputs that can be force-enabled via <code>nvidia-settings</code>. By setting a
+              <code>ConnectedMonitor</code> option in the Xorg config and using <code>ModeValidation</code>
+              to bypass EDID checks, Linux treats a phantom DP output as a real monitor.
+            </p>
+            <p>
+              The content of this virtual display is captured by <code>x0vncserver</code> (from TigerVNC),
+              which serves only the clipped region corresponding to the virtual monitor. A noVNC WebSocket
+              proxy bridges this to the browser, and the client machine simply opens a full-screen browser
+              tab pointing to the noVNC endpoint over HTTPS.
+            </p>
+            <p>
+              <strong>The result:</strong> the MacBook's browser becomes a second monitor. Drag a terminal
+              window to the right edge of your Linux screen and it appears on the Mac. Fullscreen a video
+              there and it plays.
+            </p>
+
+            <h4>Remote Desktop mode</h4>
+            <p>
+              When you click "Remote Desktop" in the control widget, the system flips the direction. The Mac's
+              browser closes, and a new browser instance launches on the Linux machine's virtual display.
+              This browser connects to the Mac's built-in VNC server through another noVNC proxy. Since this
+              browser window lives on the virtual display, the Mac now displays its own desktop through the
+              VNC chain. The Linux keyboard and mouse drive the VNC session.
+            </p>
+            <p>
+              Switching back is instant: the remote browser closes, the Mac's extended-screen browser reopens,
+              and you're back to using the Mac as a monitor.
+            </p>
+
+            <h4>The struggles</h4>
+            <p>
+              Creating a virtual monitor on Linux sounds like it should be simple &mdash; it isn't.
+              It took <strong>six attempts</strong> to get it working. The first attempt loaded a network
+              dummy module. The second replaced the GPU driver and caused a black screen. The third created
+              dead space the compositor ignored. The fourth and fifth failed against the NVIDIA proprietary
+              driver's quirks.
+            </p>
+            <p>
+              The sixth attempt &mdash; combining NVIDIA's <code>ConnectedMonitor</code> option with
+              <code>ModeValidation</code> to bypass EDID checks &mdash; finally worked. After a re-login,
+              KDE recognized it as a real second monitor. Windows could be dragged there. It just worked.
+            </p>
+
+            <h4>What I learned</h4>
+            <p>
+              The final system has <strong>zero custom screen capture code, zero custom streaming protocols,
+              and zero custom rendering.</strong> It's entirely an orchestration layer over existing tools.
+              But knowing <em>which</em> tools to chain together, and <em>how</em> to make them cooperate
+              &mdash; that was the actual engineering.
+            </p>
+
+            <div class="article-links">
+              <a href="https://github.com/marbad1994/screenlink" target="_blank" rel="noopener" class="article-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+                GitHub
+              </a>
+              <a href="https://marcus-bader.taild8e48a.ts.net/screenlink-demo" target="_blank" rel="noopener" class="article-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                Live Demo
+              </a>
+            </div>
+
+            <div class="article-divider"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Space Panel 2: Docxology -->
+      <div class="space-panel article-panel" data-project="1">
+        <div class="space-project">
+          <div class="space-project-info">
+            <div class="space-project-eyebrow">Project 02 &mdash; Born from Frustration</div>
+            <img src="https://marbad1994.github.io/docxology/assets/Docxology.png" style="width: 200px; border-radius: 8px;">
+            <p class="space-project-desc">
+              Docxology is a documentation app that is an artefact of ScreenLink. While reading the Xorg documentation that is not only hard to comprehend but also in the worst possible format, I decided to build something better.
+            </p>
+            <div class="space-project-stack">
+              <span class="space-project-tag">Claude Code</span>
+              <span class="space-project-tag">Codex</span>
+              <span class="space-project-tag">JavaScript</span>
+              <span class="space-project-tag">Python</span>
+              <span class="space-project-tag">Parsers</span>
+            </div>
+            <p class="space-project-detail">
+              <strong>The idea:</strong> Ask Claude Code to parse the documentation and put it in an easy to read format, searchable and be able to pin articles.
+            </p>
+            <div>
+              <button class="btn-test-demo" onclick="expandArticle(this.closest('.space-panel'))">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                Find out what happened next
+              </button>
+            </div>
+          </div>
+          <div class="space-project-demo">
+            <div class="space-project-demo-inner" style="padding: 0;">
+              <!-- Docxology UI Mockup -->
+              <div style="display:flex; height: 340px; background: #0f1117; border-radius: 10px; overflow: hidden; font-family: 'Public Sans', sans-serif; font-size: 11px; color: #c0c4cc; border: 1px solid rgba(255,255,255,0.06);">
+                <!-- Sidebar -->
+                <div style="width: 170px; background: #12141c; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; flex-shrink: 0;">
+                  <div style="padding: 12px 14px 8px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8aed" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="13" y2="13"/></svg>
+                    <div>
+                      <div style="font-size: 10px; font-weight: 600; color: #e0e0e6;">Docxology Docs</div>
+                      <div style="font-size: 7px; color: #555;">v1.0</div>
+                    </div>
+                  </div>
+                  <div style="margin: 4px 8px; padding: 5px 8px; background: rgba(255,255,255,0.04); border-radius: 4px; font-size: 8px; color: #666; display: flex; align-items: center; gap: 4px;">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Search docs...
+                    <span style="margin-left: auto; font-size: 7px; padding: 1px 4px; border: 1px solid #333; border-radius: 2px;">Ctrl K</span>
+                  </div>
+                  <div style="padding: 8px 0; display: flex; flex-direction: column; gap: 1px;">
+                    <div style="padding: 5px 14px; font-size: 9px; display: flex; align-items: center; gap: 6px; background: rgba(107,138,237,0.08); color: #8ba4f0; border-left: 2px solid #6b8aed;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                      Getting Started <span style="margin-left:auto; background:rgba(107,138,237,0.15); padding:1px 5px; border-radius:8px; font-size:7px;">2</span>
+                    </div>
+                    <div style="padding: 5px 14px; font-size: 9px; display: flex; align-items: center; gap: 6px;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+                      Using the App <span style="margin-left:auto; background:rgba(255,255,255,0.05); padding:1px 5px; border-radius:8px; font-size:7px;">2</span>
+                    </div>
+                    <div style="padding: 5px 14px; font-size: 9px; display: flex; align-items: center; gap: 6px;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                      Project &amp; Community <span style="margin-left:auto; background:rgba(255,255,255,0.05); padding:1px 5px; border-radius:8px; font-size:7px;">2</span>
+                    </div>
+                    <div style="padding: 5px 14px; font-size: 9px; display: flex; align-items: center; gap: 6px;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Legal &amp; Release <span style="margin-left:auto; background:rgba(255,255,255,0.05); padding:1px 5px; border-radius:8px; font-size:7px;">2</span>
+                    </div>
+                  </div>
+                  <div style="margin-top: auto; padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.04);">
+                    <div style="font-family: 'Libre Bodoni', serif; font-size: 12px; font-style: italic; color: #6b8aed;">Docxology</div>
+                    <div style="font-size: 7px; color: #444; font-family: 'JetBrains Mono', monospace;">MIT License</div>
+                  </div>
+                </div>
+                <!-- Main content -->
+                <div style="flex: 1; padding: 20px 24px; overflow: hidden;">
+                  <h2 style="font-size: 16px; font-weight: 600; color: #e8e8ec; margin-bottom: 4px;">Docxology Documentation</h2>
+                  <p style="font-size: 8px; color: #666; margin-bottom: 4px;">Built-in product documentation for using, extending, and publishing with Docxology.</p>
+                  <p style="font-size: 7px; color: #555; margin-bottom: 16px;">Browse sections in the sidebar or press <span style="padding: 1px 4px; border: 1px solid #333; border-radius: 2px; font-size: 7px;">Ctrl</span> + <span style="padding: 1px 4px; border: 1px solid #333; border-radius: 2px; font-size: 7px;">K</span> to search</p>
+                  <!-- Cards grid -->
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                    <div style="background: #161822; border: 1px solid rgba(107,138,237,0.15); border-radius: 6px; padding: 10px 12px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8aed" stroke-width="2" style="margin-bottom: 6px;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                      <div style="font-size: 9px; font-weight: 600; color: #ddd; margin-bottom: 3px;">Getting Started</div>
+                      <div style="font-size: 7px; color: #666; line-height: 1.4;">What the app is, why it exists, and how to get productive quickly.</div>
+                      <div style="font-size: 7px; color: #555; margin-top: 6px;">2 documents</div>
+                    </div>
+                    <div style="background: #161822; border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 10px 12px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8aed" stroke-width="2" style="margin-bottom: 6px;"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+                      <div style="font-size: 9px; font-weight: 600; color: #ddd; margin-bottom: 3px;">Using the App</div>
+                      <div style="font-size: 7px; color: #666; line-height: 1.4;">How to structure categories, write documents, import files, and publish.</div>
+                      <div style="font-size: 7px; color: #555; margin-top: 6px;">2 documents</div>
+                    </div>
+                    <div style="background: #161822; border: 1px solid rgba(107,138,237,0.12); border-radius: 6px; padding: 10px 12px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8aed" stroke-width="2" style="margin-bottom: 6px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                      <div style="font-size: 9px; font-weight: 600; color: #ddd; margin-bottom: 3px;">Project &amp; Community</div>
+                      <div style="font-size: 7px; color: #666; line-height: 1.4;">Why the X.Org archive exists, how the project stays open.</div>
+                      <div style="font-size: 7px; color: #555; margin-top: 6px;">2 documents</div>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 8px;">
+                    <div style="background: #161822; border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 10px 12px;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8aed" stroke-width="2" style="margin-bottom: 6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <div style="font-size: 9px; font-weight: 600; color: #ddd; margin-bottom: 3px;">Legal &amp; Release</div>
+                      <div style="font-size: 7px; color: #666; line-height: 1.4;">Licensing notes and release expectations.</div>
+                      <div style="font-size: 7px; color: #555; margin-top: 6px;">2 documents</div>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 16px; justify-content: center; margin-top: 16px; font-size: 8px; color: #555;">
+                    <span><strong style="color: #888;">4</strong> categories</span>
+                    <span><strong style="color: #888;">8</strong> documents</span>
+                    <span><strong style="color: #888;">8</strong> in published index</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Article — shown in modal -->
+          <div class="space-article">
+            <div class="article-divider"></div>
+
+            <h4>How it started</h4>
+            <p>
+              While building ScreenLink, I needed to understand Xorg's internals &mdash; virtual displays,
+              GPU driver configuration, display protocols. The documentation exists, but it's scattered across
+              man pages, mailing list archives, and decade-old wiki pages in formats that make your eyes bleed.
+            </p>
+            <p>
+              I spent more time <em>finding</em> the right docs than <em>reading</em> them. That frustration
+              became the seed for Docxology.
+            </p>
+
+            <h4>The approach</h4>
+            <p>
+              Instead of building a documentation platform from scratch, I used <strong>Claude Code</strong> and
+              <strong>Codex</strong> to parse existing documentation sources &mdash; man pages, HTML docs, plain text
+              specs &mdash; and transform them into a clean, searchable, readable format.
+            </p>
+            <p>
+              Python parsers handle the ingestion. The frontend is pure JavaScript &mdash; fast search, pinnable
+              articles, and a reading experience that doesn't feel like it was designed in 1998.
+            </p>
+
+            <h4>And Docxology was born</h4>
+            <p>
+              Docxology started as a tool for myself, but it being very helpful I thought "I might just as well release it for the next guy".
+              But I grew to enjoy to tool and decided to archive the X.org version and make the data format easier to parse so you can parse 
+              other documentation formats into this, which is just Markdown and a manifest file. So why stop there, if I can read the documents I want to be able to edit them
+              and if can edit them I want to be able to create them. As a devoloper I dont enjoy taking my hands off the keyboard for mouse clicks,
+              confluence really pushes my buttons. I enjoy writing markdown, but not reading it. Hence, Docxology.
+            </p>
+            <h4>What makes it useful</h4>
+            <ul>
+              <li>Import common text-based formats into one editable model</li>
+              <li>Write and maintain docs in the same interface you browse them in</li>
+              <li>Keep categories, ordering, and in-page navigation coherent</li>
+              <li>Publish docs without exposing editing controls</li>
+            </ul>
+              <h4>Best way to think about it</h4>
+              <p>
+                This is not a note-taking app and not a full CMS. It is a focused documentation workspace for technical projects that want lightweight structure and a polished reading experience.
+              </p>
+              <h4>Xorg Docs</h4>
+              <p>
+                I'll finally reveal my last trick for this endevour.
+                <a href="https://marcus-bader.taild8e48a.ts.net/xorg-docs/" target="_blank" style="color: var(--accent); text-decoration: underline;">The Xorg docs.</a>
+                Maybe you'll notice this projects artefact opening that link.
+              </p>
+
+            <div class="article-links">
+              <a href="https://github.com/marbad1994/docxology" target="_blank" rel="noopener" class="article-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+                GitHub
+              </a>
+              <a href="https://marbad1994.github.io/docxology/" target="_blank" rel="noopener" class="article-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+                Documentation
+              </a>
+              <a href="https://marcus-bader.taild8e48a.ts.net/xorg-docs/" target="_blank" rel="noopener" class="article-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                Xorg Docs (Live)
+              </a>
+            </div>
+
+            <div class="article-divider"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Space Panel 3: AI Desktop Assistant -->
+      <div class="space-panel article-panel" data-project="2">
+        <div class="space-project">
+          <div class="space-project-info">
+            <div class="space-project-eyebrow">Project 03 &mdash; The Saga Unfolds</div>
+            <h3 class="space-project-title">AI Desktop Assistant</h3>
+            <p class="space-project-desc">
+              When I had finished Docxology a thought came to mind: "Wouldn't it be extremely helpful to have an AI assistant with you given this specific data to get explanations or examples or context?"
+              The answer was "yes, it would be very helpful". It started with data harvesting, cleaning and annotating.
+            </p>
+            <div class="space-project-stack">
+              <span class="space-project-tag">Python</span>
+              <span class="space-project-tag">AWS Bedrock</span>
+              <span class="space-project-tag">RAG</span>
+              <span class="space-project-tag">Knowledge Base</span>
+              <span class="space-project-tag">Data Pipeline</span>
+            </div>
+            <p class="space-project-detail">
+              <strong>Method:</strong> Harvest, clean and annotate data to feed it to a knowledge base in Bedrock. But that's just how it starts.
+            </p>
+            <div>
+              <button class="btn-test-demo" onclick="expandArticle(this.closest('.space-panel'))">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                Find out how it ends
+              </button>
+            </div>
+          </div>
+          <div class="space-project-demo">
+            <div class="space-project-demo-inner" style="padding: 0;">
+              <!-- Xorg Assistant Widget Mockup -->
+              <div style="display:flex; flex-direction:column; height: 400px; width: 320px; background: #141821; border-radius: 14px; overflow: hidden; font-family: 'Public Sans', sans-serif; font-size: 11px; color: #c0c4cc; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 60px rgba(0,0,0,0.5); margin: 0 auto;">
+                <!-- Header -->
+                <div style="padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 700; color: #eee;">Xorg Assistant</div>
+                    <div style="font-size: 8px; color: #556; margin-top: 2px;">Explain docs, options, examples, and config</div>
+                  </div>
+                  <div style="display: flex; gap: 5px; margin-top: 2px;">
+                    <div style="width: 22px; height: 22px; border-radius: 5px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </div>
+                    <div style="width: 22px; height: 22px; border-radius: 5px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                  </div>
+                </div>
+                <!-- Chat area -->
+                <div style="flex: 1; padding: 0 12px; overflow: hidden; display: flex; flex-direction: column; gap: 8px;">
+                  <!-- User message -->
+                  <div style="align-self: flex-end; background: #2a5a9e; border-radius: 12px 12px 4px 12px; padding: 8px 12px; max-width: 85%;">
+                    <div style="font-size: 9px; color: #ddeeff; line-height: 1.5;">Explain more about xrandr command</div>
+                  </div>
+                  <!-- Bot response card -->
+                  <div style="background: #1a1f2e; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px; overflow: hidden;">
+                    <div style="font-size: 7px; letter-spacing: 0.1em; text-transform: uppercase; color: #556; margin-bottom: 6px;">Example-first</div>
+                    <div style="font-size: 11px; font-weight: 600; color: #e0e0e6; margin-bottom: 4px;">xrandr Command Examples</div>
+                    <div style="font-size: 8px; color: #889; line-height: 1.5; margin-bottom: 8px;">Here are a few examples of using the <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: #bcc;">xrandr</span> command:</div>
+                    <!-- Code block -->
+                    <div style="background: #111520; border-radius: 6px; padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 7px; line-height: 1.8; color: #8899aa; overflow: hidden;">
+                      <div style="font-size: 6.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #556; margin-bottom: 6px;">Bash</div>
+                      <div><span style="color: #556;"># List all available displays</span></div>
+                      <div style="color: #c8d4e0;">xrandr -q</div>
+                      <div style="height: 6px;"></div>
+                      <div><span style="color: #556;"># Get information about the current display</span></div>
+                      <div><span style="color: #556;"># configuration</span></div>
+                      <div style="color: #c8d4e0;">xrandr -q | grep "Connected"</div>
+                      <div style="height: 6px;"></div>
+                      <div><span style="color: #556;"># Enable HDMI output on DisplayPort 1</span></div>
+                      <div style="color: #c8d4e0;">xrandr --output eDP-1 --mode 1920x1080 --rate</div>
+                      <div style="color: #c8d4e0;">60 --connect HDMI-1</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Mode tabs -->
+                <div style="padding: 8px 12px 6px; display: flex; gap: 6px;">
+                  <div style="padding: 4px 10px; border-radius: 12px; font-size: 8px; color: #889; border: 1px solid rgba(255,255,255,0.08);">Plain English</div>
+                  <div style="padding: 4px 10px; border-radius: 12px; font-size: 8px; color: #889; border: 1px solid rgba(255,255,255,0.08);">Technical</div>
+                  <div style="padding: 4px 10px; border-radius: 12px; font-size: 8px; color: #ddd; border: 1px solid rgba(100,160,255,0.4); background: rgba(100,160,255,0.08);">Example-first</div>
+                </div>
+                <!-- Input bar -->
+                <div style="padding: 8px 12px 12px; display: flex; align-items: center; gap: 8px;">
+                  <div style="flex: 1; padding: 10px 14px; background: #1a1f2e; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; font-size: 8px; color: #556; line-height: 1.4;">Ask about xorg.conf, a section, or a config example...</div>
+                  <div style="width: 32px; height: 32px; border-radius: 50%; background: #2a5a9e; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Article — shown in modal -->
+          <div class="space-article">
+            <div class="article-divider"></div>
+
+            <h4>From documentation to conversation</h4>
+            <p>
+              Docxology solved the reading problem. But I kept catching myself searching for the same
+              concepts, cross-referencing between pages, trying to piece together how different Xorg
+              options interact. What I really wanted was to <em>ask</em> the documentation questions.
+            </p>
+            <p>
+              So I built an AI assistant that knows Xorg inside and out &mdash; not from a generic
+              training corpus, but from the actual documentation I'd already curated in Docxology.
+            </p>
+
+            <h4>The data pipeline</h4>
+            <p>
+              The first step was <strong>harvesting</strong>. I extracted every document from Docxology's
+              structured format &mdash; clean markdown with metadata, categories, and cross-references.
+              Then came <strong>cleaning</strong>: stripping formatting artifacts, normalizing code blocks,
+              splitting long documents into semantically meaningful chunks.
+            </p>
+            <p>
+              <strong>Annotation</strong> was the hardest part. Each chunk needed context: which section
+              it belonged to, what concepts it covered, what related topics existed. This metadata is
+              what makes the difference between a chatbot that regurgitates text and one that actually
+              understands the relationships between configuration options.
+            </p>
+
+            <h4>RAG with AWS Bedrock</h4>
+            <p>
+              The annotated data feeds into an <strong>AWS Bedrock Knowledge Base</strong>. When you ask
+              a question, the system retrieves the most relevant document chunks, assembles them as context,
+              and generates an answer with proper source citations. You're never getting hallucinated
+              config options &mdash; every answer traces back to real documentation.
+            </p>
+            <h4>Backend</h4>
+            To save costs I came up with evaulation system based on a set of questions and what's approved answers.
+            Once a post request is made the evalution is made and a look up in the database is executed to see if a question with x amount of similarity has been asked before, then return from the database.
+            No AI Model is needed. If not I set up a three model system a cheap, a medium and an expensive. It starts with the cheap one and if the answer is satisfactory according to the evaluation it returns it, if not it goes to the medium and then the expensive one. This way I save a lot of money by not using the expensive model for questions that can be answered with the cheap one.
+            <h4>Frontend</h4>
+            I decided to make the interface like a chat but less traditional because the users messages arent of the same importance as the AI's answers from a space perspective. The users messages are more of a trigger for the AI to give an answer, so I made them smaller and less prominent than the AI's answers. The AI's answers are the main focus of the interface, so I made them bigger and more visually distinct.
+            I aimed for a modern and simple design and deployed as a widget with customizable config to make it easy to reuse for other projects.
+            I added a couple of extra features like 3 pre set prompts "explain in plain english", "technical" and "example first" (these are defined in the config). The user can also make a selection of the response and right click for a quick option to explain further.
+            <h4>Moving on to a local setup</h4>
+            <p>
+              To save even more cost I took it off AWS and set it up locally with Ollama and Anything LLM. It's definitely not as powerful as the cloud setup, but it's sufficient for many tasks.
+              And this would be the spark that ignites the idea of making it a desktop assistant, which would be able to read and answer questions about any documentation, not just Xorg's.
+            </p>
+            <h4>How it ends (for now)</h4>
+            <p>
+             As mentioned earlier in this saga I do not like to remove my hands from the keyboard unless it's for a good reason, so I decided to make it a desktop assistant that can be triggered with a global shortcut and answer questions about any documentation I have set up in it. It's still a work in progress but the idea is to have it as a companion for developers, engineers and tech enthusiasts that want to have quick access to their documentation without having to search for it or open a browser.
+             So I kept the three modes and added them to "/" for the menu and I added 8 workspaces with different framworks or applications documentation completely secluded and I added a "general"
+ that will search the web and use it's own knowlege to answer the question at hand.            </p>
+            
+            <!-- <div class="article-links">
+              <a href="https://github.com/marbad1994/ai-desktop-assistant" target="_blank" rel="noopener" class="article-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+                GitHub
+              </a>
+            </div> -->
+
+            <div class="article-divider"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Final panel: Teleport back -->
+      <div class="space-panel" data-project="3">
+        <div class="space-project" style="grid-template-columns: 1fr; text-align: center; justify-items: center;">
+          <div class="space-project-info" style="align-items: center; text-align: center;">
+            <div class="space-project-eyebrow">End of transmission</div>
+            <h3 class="space-project-title" style="font-size: clamp(2rem, 5vw, 3.5rem);">Conclusion</h3>
+            <p>
+              What started with me actually just testing screen extender apps that non of them provided me with what I wanted so I developed it myself,
+              then turned into a documentation app because I needed to read the documentation and then led me to the Documentation helper AI chat brought me to my Desktop AI Assistant that I use all the time.
+            </p>
+            <p class="space-project-desc" style="text-align: center; max-width: 500px;">
+              The story continues. Teleport back to learn where I've been &mdash;
+              and where I'm going.
+            </p>
+            <button class="btn-teleport" id="teleportBtn" onclick="teleportBack()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+              Teleport back
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="space-nav" id="spaceNav">
+      <div class="space-nav-dot active" data-index="0"></div>
+      <div class="space-nav-dot" data-index="1"></div>
+      <div class="space-nav-dot" data-index="2"></div>
+      <div class="space-nav-dot" data-index="3"></div>
+    </div>
+    <div class="space-scroll-hint" id="spaceScrollHint">Scroll to explore &rarr;</div>
+    <div class="space-swipe-hint">Swipe to explore &larr; &rarr;</div>
+  </div>
+
+  <!-- Article Modal -->
+  <div class="article-modal" id="articleModal">
+    <button class="article-modal-close" onclick="closeArticleModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <div class="article-modal-inner" id="articleModalInner">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+
+  <!-- Chapter Navigation -->
+  <nav class="chapter-nav" id="chapterNav">
+    <a href="#opening" class="active"><span class="label">Opening</span><span class="pip"></span></a>
+    <a href="#origin"><span class="label">Origin</span><span class="pip"></span></a>
+    <a href="#arsenal"><span class="label">Arsenal</span><span class="pip"></span></a>
+    <a href="#journey"><span class="label">Journey</span><span class="pip"></span></a>
+    <a href="#finale-trigger"><span class="label">Finale</span><span class="pip"></span></a>
+    <a href="#signal"><span class="label">Signal</span><span class="pip"></span></a>
+  </nav>
+
+  <!-- ============================================================
+       CHAPTER I: THE OPENING
+       ============================================================ -->
+  <section class="hero chapter" id="opening">
+    <div class="hero-eyebrow">The Chronicle of</div>
+    <h1>
+      <span class="line"><span class="line-inner">Marcus</span></span>
+      <span class="line"><span class="line-inner" style="color: var(--accent-bright);">Builds</span></span>
+      <span class="line"><span class="line-inner">Things</span></span>
+    </h1>
+    <p class="hero-subtitle">
+      Developer. Creator. Relentless tinkerer.<br>
+      This isn't a CV &mdash; it's the story of what I've built, broken, and rebuilt.
+    </p>
+    <div class="hero-cta-group">
+      <a href="#arsenal" class="btn btn-primary">
+        <i data-lucide="play" style="width:14px;height:14px;"></i>
+        See the work
+      </a>
+      <a href="#signal" class="btn btn-ghost">
+        <i data-lucide="radio" style="width:14px;height:14px;"></i>
+        Get in touch
+      </a>
+    </div>
+    <div class="hero-scroll-hint">
+      <span>Scroll to begin</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CHAPTER II: THE ORIGIN STORY
+       ============================================================ -->
+  <section class="chapter" id="origin">
+    <div class="chapter-inner">
+      <div class="chapter-number reveal">Chapter II &mdash; Origin</div>
+      <h2 class="chapter-heading reveal reveal-delay-1">
+        It started with a<br><span class="accent">broken computer</span>
+      </h2>
+      <p class="chapter-text reveal reveal-delay-2">
+        I was 14. The family computer and I just had to see if I could turn it into a hackintosh.
+        I did not need a macintosh nor did anyone else, I just saw the challenge and couldn't resist.
+        Two days straight of troubleshooting, forum diving, and blind command-line tinkering later &mdash; I got it working.
+        First thing I did was to install windows again. My passion and drive comes from the thrill of the chase, not the destination.
+      </p>
+      <p class="chapter-text reveal reveal-delay-3">
+        What's good with being self taught is that you become very brave, I was very early in my career deploying traffic management systems on site.
+        What's bad with being self taught is that I dont think I even realized that it was a big deal.
+      </p>
+      <blockquote class="highlight-quote reveal reveal-delay-4">
+        "I don't build software because it's my job.<br>
+        I build it because I can't not."
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CHAPTER III: THE ARSENAL (triggers space zone)
+       ============================================================ -->
+  <section class="chapter" id="arsenal">
+    <div class="chapter-inner">
+      <div class="chapter-number reveal">Chapter III &mdash; Arsenal</div>
+      <h2 class="chapter-heading reveal reveal-delay-1">
+        Tools of the <span class="accent">trade</span>
+      </h2>
+      <p class="chapter-text reveal reveal-delay-2">
+        Not just what I know &mdash; what I wield. These are the technologies
+        I reach for when the problem matters.
+      </p>
+
+      <div class="skills-grid">
+        <div class="skill-card reveal reveal-delay-1">
+          <div class="skill-card-icon icon-green"><i data-lucide="code-2"></i></div>
+          <h3>Frontend Architecture</h3>
+          <p>Crafting interfaces that feel alive &mdash; fast, accessible, and delightful.</p>
+          <div class="skill-tags">
+            <span class="skill-tag">React</span><span class="skill-tag">Angular</span><span class="skill-tag">Next.js</span><span class="skill-tag">Vanilla JS</span>
+          </div>
+        </div>
+        <div class="skill-card reveal reveal-delay-2">
+          <div class="skill-card-icon icon-blue"><i data-lucide="server"></i></div>
+          <h3>Backend Systems</h3>
+          <p>APIs, databases, the plumbing no one sees but everyone depends on.</p>
+          <p>It used to be the smart people but these days most of the complexity that comes with fullstack lies within frontend. Backend developers just still want the glory.</p>
+          <div class="skill-tags">
+            <span class="skill-tag">Node.js</span><span class="skill-tag">Python</span><span class="skill-tag">PostgreSQL</span><span class="skill-tag">REST</span>
+          </div>
+        </div>
+        <div class="skill-card reveal reveal-delay-3">
+          <div class="skill-card-icon icon-violet"><i data-lucide="brain"></i></div>
+          <h3>AI & Machine Learning</h3>
+          <p>Building intelligent systems &mdash; from LLM integrations to custom agents.</p>
+          <div class="skill-tags">
+            <span class="skill-tag">Claude API</span><span class="skill-tag">Bedrock</span><span class="skill-tag">RAG</span><span class="skill-tag">Embeddings</span>
+          </div>
+        </div>
+        <div class="skill-card reveal reveal-delay-4">
+          <div class="skill-card-icon icon-orange"><i data-lucide="cloud"></i></div>
+          <h3>DevOps & Cloud</h3>
+          <p>Infrastructure as code, CI/CD pipelines, making deploys boring.</p>
+          <div class="skill-tags">
+            <span class="skill-tag">Docker</span><span class="skill-tag">AWS</span><span class="skill-tag">GitHub Actions</span><span class="skill-tag">Jenkins</span>
+          </div>
+        </div>
+        <div class="skill-card reveal reveal-delay-5">
+          <div class="skill-card-icon icon-rose"><i data-lucide="smartphone"></i></div>
+          <h3>Mobile & Cross-Platform</h3>
+          <p>One codebase, every screen. Native feel without native pain (except for all the constant pain that comes with it).</p>
+          <div class="skill-tags">
+            <span class="skill-tag">React Native</span><span class="skill-tag">Expo</span><span class="skill-tag">PWA</span>
+          </div>
+        </div>
+        <div class="skill-card reveal reveal-delay-6">
+          <div class="skill-card-icon icon-green"><i data-lucide="git-branch"></i></div>
+          <h3>Workflow & Craft</h3>
+          <p>The meta-skill: knowing how to ship well, collaborate, and iterate.</p>
+          <div class="skill-tags">
+            <span class="skill-tag">Git</span><span class="skill-tag">Agile</span><span class="skill-tag">Code Review</span><span class="skill-tag">Prestigelessness</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CHAPTER IV: THE JOURNEY (resume after space zone)
+       ============================================================ -->
+  <section class="chapter" id="journey">
+    <div class="chapter-inner">
+      <div class="chapter-number reveal">Chapter IV &mdash; Journey</div>
+      <h2 class="chapter-heading reveal reveal-delay-1">
+        The <span class="accent">path</span> so far
+      </h2>
+      <p class="chapter-text reveal reveal-delay-2">
+        Every role shaped a new dimension. Every team taught something
+        that no tutorial ever could.
+      </p>
+      <div class="timeline reveal reveal-delay-3">
+        <div class="timeline-item reveal">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">2024 &mdash; Present</div>
+          <div class="timeline-title">Tech lead</div>
+          <div class="timeline-company">Building the future, one commit at a time</div>
+          <div class="timeline-desc">Leading architecture decisions, mentoring devs, and shipping features that move real metrics. Full autonomy, full responsibility.</div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">2020 &mdash; 2024</div>
+          <div class="timeline-title">Founder and Full-Stack Developer</div>
+          <div class="timeline-company">Scaling from zero to thousands of users</div>
+          <div class="timeline-desc">Wore every hat. Built APIs, designed UIs, wrangled databases, debugged production at 2am. The crucible that forged real skills.</div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">2018 &mdash; 2020</div>
+          <div class="timeline-title">Junior Developer</div>
+          <div class="timeline-company">Where it all began professionally</div>
+          <div class="timeline-desc">Learned that code in production is a different animal than code on localhost. Embraced pull requests, tests, and the art of asking good questions.</div>
+        </div>
+        <div class="timeline-item reveal">
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">2016 &mdash; 2018</div>
+          <div class="timeline-title">Self-Taught Era</div>
+          <div class="timeline-company">The internet was my university</div>
+          <div class="timeline-desc">Hundreds of hours of courses, docs, Stack Overflow rabbit holes, and side projects that nobody asked for but everyone learned from.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       3D MINDMAP — Industries
+       ============================================================ -->
+  <section class="mindmap-section" id="mindmap">
+    <div class="mindmap-canvas-wrap reveal reveal-scale">
+      <canvas class="mindmap-canvas" id="mindmapCanvas"></canvas>
+      <div id="mindmapLoader" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.75rem;background:var(--bg-void);z-index:5;transition:opacity 0.5s;">
+        <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);letter-spacing:0.1em;">Loading 3D models...</div>
+        <div style="width:160px;height:2px;background:var(--bg-elevated);border-radius:1px;overflow:hidden;">
+          <div id="mindmapLoaderFill" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+      <div class="mindmap-info" id="mindmapInfo">
+        <div class="mindmap-info-title" id="mindmapInfoTitle"></div>
+        <div class="mindmap-info-period" id="mindmapInfoPeriod"></div>
+        <div class="mindmap-info-desc" id="mindmapInfoDesc"></div>
+      </div>
+      <div class="mindmap-hint" id="mindmapHint">
+        Hover models to explore &nbsp;&bull;&nbsp; Drag to orbit &nbsp;&bull;&nbsp; Scroll to zoom &nbsp;&bull;&nbsp; Right-drag to pan
+      </div>
+      <button class="mm-exit-btn" id="mmMobileExit">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        Continue to the finale
+      </button>
+    </div>
+  </section>
+
+  <!-- Finale trigger sentinel -->
+  <div id="finale-trigger" style="height: 1px;"></div>
+
+  <!-- ============================================================
+       3D FINALE — THE RUN
+       ============================================================ -->
+  <div class="finale-wrapper" id="finaleWrapper">
+    <canvas class="finale-canvas" id="finaleCanvas"></canvas>
+    <div class="finale-loader" id="finaleLoader">
+      <div class="finale-loader-text">Loading the finale...</div>
+      <div class="finale-loader-bar"><div class="finale-loader-fill" id="finaleLoaderFill"></div></div>
+    </div>
+    <div class="finale-subtitle" id="finaleSubtitle"></div>
+    <div class="finale-controls" id="finaleControls">
+      <span class="finale-key">W</span>
+      <span class="finale-key">A</span>
+      <span class="finale-key">S</span>
+      <span class="finale-key">D</span>
+      <span>move</span>
+      <span class="finale-key" style="width: 56px;">Space</span>
+      <span>jump</span>
+    </div>
+    <!-- Mobile touch controls -->
+    <div class="mobile-touch-controls" id="mobileControls">
+      <div class="touch-dpad">
+        <div style="grid-column: 1;"></div>
+        <div class="touch-btn" data-key="arrowup">&#x25B2;</div>
+        <div style="grid-column: 3;"></div>
+        <div class="touch-btn" data-key="arrowleft">&#x25C0;</div>
+        <div class="touch-btn" data-key="arrowdown">&#x25BC;</div>
+        <div class="touch-btn" data-key="arrowright">&#x25B6;</div>
+      </div>
+      <div class="touch-btn-jump" data-key=" ">Jump</div>
+    </div>
+    <div class="finale-blackout" id="finaleBlackout">
+      <div class="finale-final-text">Let's run towards the future<br><span class="accent">together</span></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       CHAPTER V: THE SIGNAL
+       ============================================================ -->
+  <section class="chapter" id="signal" style="min-height: auto; padding-bottom: 0; visibility: hidden;">
+    <div class="chapter-inner" style="text-align: center;">
+      <div class="chapter-number reveal" style="text-align: center;">Chapter V &mdash; Signal</div>
+      <h2 class="chapter-heading reveal reveal-delay-1" style="margin-left: auto; margin-right: auto;">
+        Let's build<br><span class="accent">something together</span>
+      </h2>
+      <p class="chapter-text reveal reveal-delay-2" style="margin-left: auto; margin-right: auto; text-align: center;">
+        The best projects start with a conversation. Whether it's a wild idea,
+        a gnarly bug, or a "what if we..." &mdash; I'm listening.
+      </p>
+
+      <div class="contact-row reveal reveal-delay-3">
+        <a href="mailto:marcus.e.r.bader@gmail.com" class="contact-card">
+          <div class="contact-card-icon icon-mail">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </div>
+          <span class="contact-card-label">Email</span>
+        </a>
+        <a href="https://github.com/marbad1994" class="contact-card" target="_blank" rel="noopener">
+          <div class="contact-card-icon icon-github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </div>
+          <span class="contact-card-label">GitHub</span>
+        </a>
+        <a href="https://linkedin.com/in/marcus" class="contact-card" target="_blank" rel="noopener">
+          <div class="contact-card-icon icon-linkedin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </div>
+          <span class="contact-card-label">LinkedIn</span>
+        </a>
+      </div>
+
+      <!-- Rolling Credits -->
+      <div class="credits-wrapper reveal reveal-delay-4">
+        <div class="credits-roll">
+          <!-- First copy -->
+          <div class="credits-final" style="margin-top: 0; margin-bottom: 2.5rem;">Based on a true story.</div>
+          <div class="credit-section">
+            <div class="credit-role">Written, Directed &amp; Developed by</div>
+            <div class="credit-name">Marcus</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Concept &amp; Design</div>
+            <div class="credit-name">Marcus</div>
+            <div class="credit-detail">with obsessive attention to detail</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">3D Character</div>
+            <div class="credit-name">Meshy AI</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Animations</div>
+            <div class="credit-name">Mixamo</div>
+            <div class="credit-detail">Adobe</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">AI Pair Programmer</div>
+            <div class="credit-name">Claude</div>
+            <div class="credit-detail">Anthropic</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Design System</div>
+            <div class="credit-name">UI/UX Pro Max</div>
+            <div class="credit-detail">by NextLevelBuilder</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">3D Engine</div>
+            <div class="credit-name">Three.js</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Typography</div>
+            <div class="credit-name">Libre Bodoni &amp; Public Sans</div>
+            <div class="credit-detail">Google Fonts</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Icons</div>
+            <div class="credit-name">Lucide</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Fueled By</div>
+            <div class="credit-name">Inspiration &amp; Curiosity</div>
+          </div>
+          <div class="credit-divider"></div>
+          <div class="credit-section">
+            <div class="credit-role">Special Thanks</div>
+            <div class="credit-name">You</div>
+            <div class="credit-detail">for scrolling this far</div>
+          </div>
+          <div class="credit-divider"></div>
+          <div class="credits-final">No frameworks were harmed in the making of this CV.</div>
+          <div style="height: 4rem;"></div>
+
+          <!-- Duplicate for seamless loop -->
+          <div class="credits-final" style="margin-top: 0; margin-bottom: 2.5rem;">Based on a true story.</div>
+          <div class="credit-section">
+            <div class="credit-role">Written, Directed &amp; Developed by</div>
+            <div class="credit-name">Marcus</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Concept &amp; Design</div>
+            <div class="credit-name">Marcus</div>
+            <div class="credit-detail">with obsessive attention to detail</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">3D Character</div>
+            <div class="credit-name">Meshy AI</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Animations</div>
+            <div class="credit-name">Mixamo</div>
+            <div class="credit-detail">Adobe</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">AI Pair Programmer</div>
+            <div class="credit-name">Claude</div>
+            <div class="credit-detail">Anthropic</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Design System</div>
+            <div class="credit-name">UI/UX Pro Max</div>
+            <div class="credit-detail">by NextLevelBuilder</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">3D Engine</div>
+            <div class="credit-name">Three.js</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Typography</div>
+            <div class="credit-name">Libre Bodoni &amp; Public Sans</div>
+            <div class="credit-detail">Google Fonts</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Icons</div>
+            <div class="credit-name">Lucide</div>
+          </div>
+          <div class="credit-section">
+            <div class="credit-role">Fueled By</div>
+            <div class="credit-name">Inspiration &amp; Curiosity</div>
+          </div>
+          <div class="credit-divider"></div>
+          <div class="credit-section">
+            <div class="credit-role">Special Thanks</div>
+            <div class="credit-name">You</div>
+            <div class="credit-detail">for scrolling this far</div>
+          </div>
+          <div class="credit-divider"></div>
+          <div class="credits-final">No frameworks were harmed in the making of this CV.</div>
+          <div style="height: 4rem;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="siteFooter" style="padding: 1.5rem 2rem; text-align: center; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.1em; visibility: hidden;">
+    &copy; <span id="currentYear"></span> Marcus &mdash; Crafted frame by frame.
+  </footer>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script src="projects/screenlink/demo.js"></script>
+  <script>
+    // ── Init — always start at top on load/reload ──
+    history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
+    lucide.createIcons();
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // ── Custom Cursor ──
+    const cursorEl = document.getElementById('cursor');
+    const cursorDot = document.getElementById('cursorDot');
+    let mouseX = 0, mouseY = 0, cX = 0, cY = 0, dX = 0, dY = 0;
+
+    document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+    function animateCursor() {
+      cX += (mouseX - cX) * 0.12; cY += (mouseY - cY) * 0.12;
+      cursorEl.style.left = cX + 'px'; cursorEl.style.top = cY + 'px';
+      dX += (mouseX - dX) * 0.25; dY += (mouseY - dY) * 0.25;
+      cursorDot.style.left = dX + 'px'; cursorDot.style.top = dY + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    function setupHoverTargets() {
+      document.querySelectorAll('a, button, .btn, .skill-card, .contact-link, .btn-teleport, .space-nav-dot, .widget-mode-btn, .widget-footer-btn, .screenlink-tray').forEach(el => {
+        el.addEventListener('mouseenter', () => cursorEl.classList.add('hovering'));
+        el.addEventListener('mouseleave', () => cursorEl.classList.remove('hovering'));
+      });
+    }
+    setupHoverTargets();
+
+    // ── Skill Card Glow ──
+    document.querySelectorAll('.skill-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100) + '%');
+        card.style.setProperty('--mouse-y', ((e.clientY - r.top) / r.height * 100) + '%');
+      });
+    });
+
+    // ── Scroll Progress ──
+    const scrollProgress = document.getElementById('scrollProgress');
+    function updateScrollProgress() {
+      const p = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      scrollProgress.style.width = p + '%';
+    }
+
+    // ── Reveal Observer ──
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => revealObs.observe(el));
+
+    // ── Chapter Nav Active ──
+    const chapters = document.querySelectorAll('.chapter');
+    const navLinks = document.querySelectorAll('.chapter-nav a');
+    const chapterObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+        }
+      });
+    }, { threshold: 0.3 });
+    chapters.forEach(ch => chapterObs.observe(ch));
+
+    window.addEventListener('scroll', updateScrollProgress, { passive: true });
+
+    // ── Smooth scroll ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        const t = document.querySelector(this.getAttribute('href'));
+        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // ── Orb parallax ──
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 30;
+      const y = (e.clientY / window.innerHeight - 0.5) * 30;
+      document.querySelectorAll('.orb').forEach((orb, i) => {
+        orb.style.transform = `translate(${x * (i+1) * 0.4}px, ${y * (i+1) * 0.4}px)`;
+      });
+    });
+
+    // ============================================================
+    //  SPACE ZONE ENGINE
+    // ============================================================
+    const arsenalSection = document.getElementById('arsenal');
+    const journeySection = document.getElementById('journey');
+    const redAlert = document.getElementById('redAlert');
+    const alertText = document.getElementById('alertText');
+    const spaceWrapper = document.getElementById('spaceZoneWrapper');
+    const spaceZone = document.getElementById('spaceZone');
+    const speedLines = document.getElementById('speedLines');
+    const starfieldCanvas = document.getElementById('starfield');
+    const teleportFlash = document.getElementById('teleportFlash');
+    const spaceNav = document.getElementById('spaceNav');
+    const spaceScrollHint = document.getElementById('spaceScrollHint');
+
+    let spaceActive = false;
+    let spaceLaunching = false;
+    let spaceCompleted = false;
+    let spaceCurrentPanel = 0;
+    const spacePanels = spaceZone.querySelectorAll('.space-panel');
+    const spaceNavDots = spaceNav.querySelectorAll('.space-nav-dot');
+    let slDemoInitialized = false;
+
+    // Generate speed lines
+    for (let i = 0; i < 30; i++) {
+      const line = document.createElement('div');
+      line.className = 'speed-line';
+      line.style.top = (Math.random() * 100) + '%';
+      line.style.width = (100 + Math.random() * 200) + 'px';
+      line.style.animationDuration = (0.3 + Math.random() * 0.4) + 's';
+      line.style.animationDelay = (Math.random() * 0.5) + 's';
+      line.style.opacity = (0.3 + Math.random() * 0.7);
+      speedLines.appendChild(line);
+    }
+
+    // Starfield
+    const sfCtx = starfieldCanvas.getContext('2d');
+    let stars = [];
+    let sfAnimId;
+
+    function initStarfield() {
+      starfieldCanvas.width = window.innerWidth;
+      starfieldCanvas.height = window.innerHeight;
+      stars = [];
+      for (let i = 0; i < 300; i++) {
+        stars.push({
+          x: Math.random() * starfieldCanvas.width,
+          y: Math.random() * starfieldCanvas.height,
+          r: Math.random() * 1.5 + 0.3,
+          a: Math.random() * 0.8 + 0.2,
+          twinkleSpeed: Math.random() * 0.02 + 0.005,
+          twinklePhase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function drawStarfield(time) {
+      sfCtx.clearRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
+      stars.forEach(s => {
+        const flicker = Math.sin(time * s.twinkleSpeed + s.twinklePhase) * 0.3 + 0.7;
+        sfCtx.beginPath();
+        sfCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        sfCtx.fillStyle = `rgba(255, 255, 255, ${s.a * flicker})`;
+        sfCtx.fill();
+      });
+      if (spaceActive) sfAnimId = requestAnimationFrame(drawStarfield);
+    }
+
+    window.addEventListener('resize', () => { if (spaceActive) initStarfield(); });
+
+    // Scroll lock detection
+    let arsenalScrollAttempts = 0;
+    let lastScrollY = 0;
+    let scrollLocked = false;
+
+    function checkArsenalScrollLock() {
+      if (spaceActive || spaceLaunching || spaceCompleted) return;
+
+      const rect = arsenalSection.getBoundingClientRect();
+      const arsenalBottom = rect.bottom;
+      // Trigger when Arsenal bottom just passes below 85% of viewport
+      // i.e. user has scrolled just past the skills grid
+      const threshold = window.innerHeight * 0.8;
+
+      if (arsenalBottom < threshold && arsenalBottom > -200 && window.scrollY > lastScrollY) {
+        arsenalScrollAttempts++;
+        if (arsenalScrollAttempts > 3) {
+          launchToSpace();
+        }
+      } else if (arsenalBottom > window.innerHeight) {
+        arsenalScrollAttempts = 0;
+      }
+
+      lastScrollY = window.scrollY;
+    }
+
+    window.addEventListener('scroll', checkArsenalScrollLock, { passive: true });
+
+    // ── LAUNCH SEQUENCE ──
+    function launchToSpace() {
+      if (spaceLaunching || spaceActive) return;
+      spaceLaunching = true;
+      arsenalScrollAttempts = 0;
+
+      // Scroll to snap Arsenal fully into view first
+      arsenalSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+      // Lock scroll after a beat
+      setTimeout(() => {
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('in-space');
+      }, 300);
+
+      // Phase 1: Red Alert — build tension (2.5s)
+      setTimeout(() => {
+        redAlert.classList.add('active');
+        alertText.textContent = 'Warning';
+      }, 400);
+
+      setTimeout(() => { alertText.textContent = 'Scroll Lock Detected'; }, 1200);
+      setTimeout(() => { alertText.textContent = 'Launching'; }, 2000);
+      setTimeout(() => { alertText.textContent = 'Hold On'; }, 2600);
+
+      // Phase 2: Speed lines + launch (after 3s of red alert)
+      setTimeout(() => {
+        redAlert.classList.remove('active');
+        speedLines.classList.add('active');
+
+        // Init space
+        initStarfield();
+        spaceWrapper.classList.add('active');
+        spaceCurrentPanel = 0;
+        spaceZone.style.transition = 'none';
+        spaceZone.style.transform = `translateX(100vw)`;
+
+        // Animate in — long dramatic flight (3.5s)
+        requestAnimationFrame(() => {
+          spaceZone.style.transition = 'transform 3.5s cubic-bezier(0.16, 1, 0.3, 1)';
+          spaceZone.style.transform = 'translateX(0)';
+        });
+
+        // Start starfield
+        sfAnimId = requestAnimationFrame(drawStarfield);
+
+        // Init ScreenLink demo
+        if (!slDemoInitialized) {
+          slDemoInitialized = true;
+          initScreenLinkDemo(document.getElementById('screenlinkDemo'));
+        }
+
+        // Speed lines stay for the whole flight, then fade
+        setTimeout(() => {
+          speedLines.classList.remove('active');
+          spaceActive = true;
+          spaceLaunching = false;
+          showSpacePanel(0);
+          setupHoverTargets();
+        }, 3800);
+
+      }, 3000);
+    }
+
+    // ── Space navigation via scroll + swipe ──
+    let spaceScrollAccum = 0;
+    const SPACE_SCROLL_THRESHOLD = 120;
+
+    // Swipe support for mobile
+    let spaceTouchStartX = 0;
+    let spaceTouchStartY = 0;
+    spaceWrapper.addEventListener('touchstart', (e) => {
+      if (!spaceActive) return;
+      spaceTouchStartX = e.touches[0].clientX;
+      spaceTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    spaceWrapper.addEventListener('touchend', (e) => {
+      if (!spaceActive) return;
+      const dx = e.changedTouches[0].clientX - spaceTouchStartX;
+      const dy = e.changedTouches[0].clientY - spaceTouchStartY;
+      // Only trigger if horizontal swipe is dominant
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0 && spaceCurrentPanel < spacePanels.length - 1) {
+          spaceCurrentPanel++;
+          showSpacePanel(spaceCurrentPanel);
+        } else if (dx > 0 && spaceCurrentPanel > 0) {
+          spaceCurrentPanel--;
+          showSpacePanel(spaceCurrentPanel);
+        }
+      }
+    }, { passive: true });
+
+    spaceWrapper.addEventListener('wheel', (e) => {
+      if (!spaceActive) return;
+      e.preventDefault();
+
+      spaceScrollAccum += e.deltaY;
+
+      if (Math.abs(spaceScrollAccum) > SPACE_SCROLL_THRESHOLD) {
+        if (spaceScrollAccum > 0 && spaceCurrentPanel < spacePanels.length - 1) {
+          spaceCurrentPanel++;
+          showSpacePanel(spaceCurrentPanel);
+        } else if (spaceScrollAccum < 0 && spaceCurrentPanel > 0) {
+          spaceCurrentPanel--;
+          showSpacePanel(spaceCurrentPanel);
+        }
+        spaceScrollAccum = 0;
+      }
+    }, { passive: false });
+
+    // Nav dot clicks
+    spaceNavDots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const idx = parseInt(dot.dataset.index);
+        spaceCurrentPanel = idx;
+        showSpacePanel(idx);
+      });
+    });
+
+    function showSpacePanel(idx) {
+      spaceZone.style.transition = 'transform 1.4s cubic-bezier(0.22, 1, 0.36, 1)';
+      spaceZone.style.transform = `translateX(-${idx * 100}vw)`;
+
+      // Update dots
+      spaceNavDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
+      // Reveal project
+      setTimeout(() => {
+        spacePanels[idx].querySelector('.space-project')?.classList.add('visible');
+      }, 300);
+
+      // Update hint
+      if (idx === spacePanels.length - 1) {
+        spaceScrollHint.textContent = '';
+      } else {
+        spaceScrollHint.innerHTML = 'Scroll to explore &rarr;';
+      }
+    }
+
+    // ── TELEPORT BACK ──
+    function teleportBack() {
+      if (!spaceActive) return;
+      spaceActive = false;
+      spaceCompleted = true;
+
+      // Flash — instant white
+      teleportFlash.classList.add('active');
+
+      // Hold the white for suspense (800ms)
+      setTimeout(() => {
+        // While white: tear down space, reposition scroll
+        spaceWrapper.classList.remove('active');
+        cancelAnimationFrame(sfAnimId);
+
+        // Scroll to journey while everything is white
+        journeySection.scrollBy({ behavior: 'instant', block: 'start' });
+
+        // Reset space panels
+        spacePanels.forEach(p => {
+          const proj = p.querySelector('.space-project');
+          if (proj) proj.classList.remove('visible');
+          p.classList.remove('demo-expanded');
+          const closeBtn = p.querySelector('.btn-close-demo');
+          if (closeBtn) closeBtn.style.display = 'none';
+        });
+      }, 800);
+
+      // Fade white out slowly (after 1.2s total)
+      setTimeout(() => {
+        teleportFlash.classList.remove('active');
+        document.body.style.overflow = '';
+        document.body.classList.remove('in-space');
+        arsenalScrollAttempts = 0;
+
+        // Re-trigger journey reveals
+        journeySection.querySelectorAll('.reveal').forEach(el => {
+          el.classList.remove('visible');
+          void el.offsetHeight;
+          revealObs.observe(el);
+        });
+      }, 1400);
+    }
+
+    // ── DEMO EXPAND / COLLAPSE ──
+    const demoShockwave = document.getElementById('demoShockwave');
+
+    function expandDemo(panel) {
+      if (!panel || panel.classList.contains('demo-expanded')) return;
+
+      // Shockwave first — let it breathe
+      demoShockwave.classList.remove('active');
+      void demoShockwave.offsetHeight;
+      demoShockwave.classList.add('active');
+
+      // Wait for shockwave to pass, then expand (500ms delay)
+      setTimeout(() => {
+        panel.classList.add('demo-expanded');
+
+        // Show close button after expand animation settles
+        const closeBtn = panel.querySelector('.btn-close-demo');
+        if (closeBtn) {
+          closeBtn.style.display = 'flex';
+          closeBtn.style.opacity = '0';
+          closeBtn.style.animation = 'none';
+          void closeBtn.offsetHeight;
+          closeBtn.style.animation = 'fadeUp 0.5s var(--ease-out-expo) 0.8s forwards';
+        }
+
+        setupHoverTargets();
+      }, 500);
+    }
+
+    // ── ARTICLE MODAL ──
+    const articleModal = document.getElementById('articleModal');
+    const articleModalInner = document.getElementById('articleModalInner');
+    let articleModalOpen = false;
+
+    let articleSourcePanel = null;
+    let articleSourceDemoParent = null;
+
+    function expandArticle(panel) {
+      if (!panel || articleModalOpen) return;
+      articleModalOpen = true;
+      articleSourcePanel = panel;
+
+      // Shockwave
+      demoShockwave.classList.remove('active');
+      void demoShockwave.offsetHeight;
+      demoShockwave.classList.add('active');
+
+      // Grab header info as HTML strings
+      const info = panel.querySelector('.space-project-info');
+      const eyebrow = info.querySelector('.space-project-eyebrow')?.outerHTML || '';
+      const title = info.querySelector('.space-project-title')?.outerHTML || '';
+      const desc = info.querySelector('.space-project-desc')?.outerHTML || '';
+      const stack = info.querySelector('.space-project-stack')?.outerHTML || '';
+
+      // Grab article HTML
+      const articleEl = panel.querySelector('.space-article');
+      const articleHTML = articleEl ? articleEl.innerHTML : '';
+
+      // Build modal shell
+      articleModalInner.innerHTML = `
+        <div class="article-modal-header">
+          ${eyebrow}
+          ${title}
+          ${desc}
+          ${stack}
+        </div>
+        <div class="article-modal-demo"></div>
+        <div class="space-article" style="opacity:1;max-height:none;overflow:visible;">
+          ${articleHTML}
+        </div>
+        <button class="mobile-close-btn" onclick="closeArticleModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          Close
+        </button>
+      `;
+
+      // MOVE the actual demo DOM (not clone) — preserves all event listeners
+      const demoEl = panel.querySelector('.space-project-demo');
+      articleSourceDemoParent = demoEl.parentNode;
+      const demoContainer = articleModalInner.querySelector('.article-modal-demo');
+      demoContainer.appendChild(demoEl);
+
+      // Open modal after shockwave
+      setTimeout(() => {
+        articleModal.classList.add('active');
+        setupHoverTargets();
+      }, 500);
+
+      // Prevent space zone scroll while modal is open
+      articleModal.addEventListener('wheel', (e) => e.stopPropagation(), { passive: false });
+    }
+
+    function closeArticleModal() {
+      articleModal.classList.remove('active');
+      articleModalOpen = false;
+
+      // Move demo back to original panel
+      if (articleSourcePanel && articleSourceDemoParent) {
+        const demoEl = articleModalInner.querySelector('.space-project-demo');
+        if (demoEl) {
+          articleSourceDemoParent.appendChild(demoEl);
+        }
+      }
+
+      // Clean up after transition
+      setTimeout(() => {
+        articleModalInner.innerHTML = '';
+        articleSourcePanel = null;
+        articleSourceDemoParent = null;
+      }, 600);
+    }
+
+    // ESC closes modal too
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && articleModalOpen) {
+        closeArticleModal();
+        e.stopPropagation();
+      }
+    });
+
+    function collapseDemo(panel) {
+      if (!panel || !panel.classList.contains('demo-expanded')) return;
+
+      // Hide close button
+      const closeBtn = panel.querySelector('.btn-close-demo');
+      if (closeBtn) closeBtn.style.display = 'none';
+
+      panel.classList.remove('demo-expanded');
+    }
+
+    // Keyboard navigation in space
+    document.addEventListener('keydown', (e) => {
+      if (!spaceActive) return;
+      if (e.key === 'ArrowRight' && spaceCurrentPanel < spacePanels.length - 1) {
+        spaceCurrentPanel++;
+        showSpacePanel(spaceCurrentPanel);
+      } else if (e.key === 'ArrowLeft' && spaceCurrentPanel > 0) {
+        spaceCurrentPanel--;
+        showSpacePanel(spaceCurrentPanel);
+      } else if (e.key === 'Escape') {
+        teleportBack();
+      }
+    });
+  </script>
+
+  <!-- ============================================================
+       3D MINDMAP ENGINE + BACKGROUND PRELOADER
+       ============================================================ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ── Industry data ──
+    const INDUSTRIES = [
+      {
+        key: 'tooth',
+        path: 'models/mindmap/tooth/tooth_texture.fbx',
+        title: 'Dental Industry',
+        period: '',
+        desc: 'As a techlead at one of the most prominent AI companies within dentistry, in Europe, my responsibilities ícludes frontend where there is always a balance between new features and maintaining legacy, backend where stability and inference time is of highest importance and deployment and architecture through AWS.',
+        angle: -90,
+      },
+      {
+        key: 'plane',
+        path: 'models/mindmap/plane/plane_texture.fbx',
+        title: 'Aviation',
+        period: '',
+        desc: 'I was a part of a team who provided crew planning software for major airlines in America and South East Asia. My role was to develop business logic and have it comply with different aviation regulations such as FAA and EASA. I also worked on the rostering system which was responsible for assigning crew members to flights while considering various constraints and preferences.',
+        angle: -60,
+      },
+      {
+        key: 'train',
+        path: 'models/mindmap/train/train_texture.fbx',
+        title: 'Rail & Transport',
+        period: '',
+        desc: 'I began my career in the rail industry to configure the autmoated trafic management systems. This is where I got to expand my knowledge within scrum and agile frameworks to later be agile coach and guiding seven teams and two offices into the agile framework. This was also the place tha fostered me as a devloper and had me working with innovative development as well as being on site and deploying',
+        angle: -30,
+      },
+      {
+        key: '5g',
+        path: 'models/mindmap/5g/5g_texture.fbx',
+        title: 'Telecom & 5G',
+        period: '',
+        desc: 'I spent over three years at the worlds largest telecom provider, working with their 5G network security testing system. My role involved developing and maintaining software solutions to automatically security test the 5G network infrastructure, ensuring its robustness against potential cyber threats. This experience allowed me to gain deep insights into the telecom industry and the critical importance of network security in the era of 5G connectivity.',
+        angle: 0,
+      },
+      {
+        key: 'partplanning',
+        path: 'models/mindmap/party/party_texture.fbx',
+        title: 'Event Planning',
+        period: '',
+        desc: 'I worked as a fullstack developer in a team of two with the extremely talented <a href="https://www.linkedin.com/in/betina-a-671916138/" target="_blank" rel="noopener" style="color:var(--accent-bright);text-decoration:underline;">Betina Andersson</a> to develop an event planning app for children birthday parties. The app allowed users to create and manage their party guest lists, send out invitations, and organize party details in a fun and interactive way. This experience was particularly rewarding as it let me be part of the start, the planning, the devolpment and the launch of the app for a startup company.',
+        angle: 30,
+      },
+      {
+        key: 'teacher',
+        path: 'models/mindmap/education/education_texture.fbx',
+        title: 'Education',
+        period: '',
+        desc: 'During covid I took the opportunity to share my knowledge and passion for software development by teaching programming for trade schools in Gothenburg. I taught agile project management, scripting in python on bash and Java. My personal goal was to teach them to be language agnostic and focused more about concepts rather than syntax. I am proud to say I had a 4.9/5 rating from my students and I am grateful for the opportunity to have inspired and educated the next generation of developers.',
+        angle: 60,
+      },
+      {
+        key: 'discgolf',
+        path: 'models/mindmap/discgolf/discgolf_texture.fbx',
+        title: 'Disc Golf',
+        period: '',
+        desc: 'I worked alongside <a href="https://www.linkedin.com/in/carolineimbader/" target="_blank" rel="noopener" style="color:var(--accent-bright);text-decoration:underline;">Caroline Bader</a> to develop Swedens biggest disc golf league and series platform. The platform allowed players to register for tournaments, track their scores, and connect with other players in the disc golf community. This project was challengeing as it required us to think outside the box to create a dynamic CMS for the client to build his own sub pages without creating a full website creator',
+        angle: 90,
+      },
+    ];
+
+    // ── Background preloader — staggered, desktop only ──
+    const preloadCache = {};
+    window.__preloadCache = preloadCache;
+
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+
+    async function preloadStaggered() {
+      // Skip blob preloading on mobile — saves memory, FBXLoader fetches directly
+      if (isMobile) return;
+
+      const queue = [
+        'Idle.fbx', 'Running.fbx', 'Jump.fbx', 'Standing Greeting.fbx', 'Talking.fbx',
+        ...INDUSTRIES.map(i => i.path),
+      ];
+
+      // Load 1 at a time on smaller screens, 2 on desktop
+      const batchSize = window.innerWidth < 1024 ? 1 : 2;
+      for (let i = 0; i < queue.length; i += batchSize) {
+        const batch = queue.slice(i, i + batchSize);
+        await Promise.allSettled(
+          batch.map(url =>
+            fetch(url)
+              .then(r => r.blob())
+              .then(blob => { preloadCache[url] = URL.createObjectURL(blob); })
+              .catch(() => {})
+          )
+        );
+      }
+    }
+
+    // Start preloading after a short delay so the page paints first
+    setTimeout(preloadStaggered, 1500);
+
+    // ── Mindmap Scene ──
+    const canvas = document.getElementById('mindmapCanvas');
+    const infoEl = document.getElementById('mindmapInfo');
+    const infoTitle = document.getElementById('mindmapInfoTitle');
+    const infoPeriod = document.getElementById('mindmapInfoPeriod');
+    const infoDesc = document.getElementById('mindmapInfoDesc');
+    const hintEl = document.getElementById('mindmapHint');
+    const wrapEl = canvas.parentElement;
+
+    let mmScene, mmCamera, mmRenderer, mmClock, mmControls;
+    let mmActive = false;
+    let mmLoaded = false;
+    let mmModels = [];
+    let mmHitSpheres = [];
+    let mmMarcus = null;
+    let mmMarcusMixer = null;
+    let mmRaycaster = new THREE.Raycaster();
+    let mmMouse = new THREE.Vector2(-999, -999);
+    let mmHoveredIndex = -1;
+    let mmInfoHovered = false;
+
+    function initMindmap() {
+      const w = wrapEl.clientWidth;
+      const h = wrapEl.clientHeight;
+
+      mmScene = new THREE.Scene();
+      mmScene.background = new THREE.Color(0x09090B);
+
+      // Camera — zoomed out so whole scene is comfortable
+      mmCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+      mmCamera.position.set(0, 7, 15);
+      mmCamera.lookAt(0, 2.5, -2);
+
+      mmRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      mmRenderer.setSize(w, h);
+      mmRenderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+      mmRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      mmRenderer.toneMappingExposure = 2.2;
+
+      mmClock = new THREE.Clock();
+
+      // Orbit controls — zoom requires Ctrl+scroll, drag to orbit, right-drag to pan
+      mmControls = new OrbitControls(mmCamera, canvas);
+      mmControls.enableDamping = true;
+      mmControls.dampingFactor = 0.08;
+      mmControls.enablePan = true;
+      mmControls.enableZoom = true;
+      mmControls.minDistance = 5;
+      mmControls.maxDistance = 25;
+      mmControls.maxPolarAngle = Math.PI / 2.1;
+      mmControls.target.set(0, 2.5, -2);
+      mmControls.update();
+
+      // Lights — bright enough to see everything clearly
+      mmScene.add(new THREE.AmbientLight(0xddddee, 2.0));
+      mmScene.add(new THREE.HemisphereLight(0xccddff, 0x336655, 1.0));
+
+      const main = new THREE.DirectionalLight(0xffeedd, 2.2);
+      main.position.set(4, 8, 6);
+      mmScene.add(main);
+
+      const front = new THREE.DirectionalLight(0xffffff, 1.0);
+      front.position.set(0, 5, 10);
+      mmScene.add(front);
+
+      const rim = new THREE.DirectionalLight(0x34D399, 0.8);
+      rim.position.set(-4, 4, -3);
+      mmScene.add(rim);
+
+      // Ground — subtle reflective circle
+      const groundGeo = new THREE.CircleGeometry(14, 64);
+      const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x0c0c18,
+        roughness: 0.5,
+        metalness: 0.5,
+      });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.01;
+      mmScene.add(ground);
+
+      // Resize
+      window.addEventListener('resize', () => {
+        if (!mmActive) return;
+        const nw = wrapEl.clientWidth;
+        const nh = wrapEl.clientHeight;
+        mmCamera.aspect = nw / nh;
+        mmCamera.updateProjectionMatrix();
+        mmRenderer.setSize(nw, nh);
+      });
+    }
+
+    async function loadMindmapModels() {
+      const loader = new FBXLoader();
+
+      // Load Marcus idle
+      const marcusUrl = preloadCache['Idle.fbx'] || 'Idle.fbx';
+      mmMarcus = await loader.loadAsync(marcusUrl);
+      mmMarcus.scale.setScalar(0.01);
+      mmMarcus.position.set(0, 0, 0);
+
+      // Apply texture
+      const texLoader = new THREE.TextureLoader();
+      let charTex = null;
+      try {
+        charTex = await texLoader.loadAsync('Meshy_AI_Confident_Professiona_0416125024_texture.png');
+        charTex.flipY = true;
+        charTex.colorSpace = THREE.SRGBColorSpace;
+      } catch (e) {}
+
+      mmMarcus.traverse(child => {
+        if (child.isMesh) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(mat => {
+            if (charTex) mat.map = charTex;
+            mat.side = THREE.DoubleSide;
+            mat.needsUpdate = true;
+          });
+        }
+      });
+
+      if (mmMarcus.animations?.length > 0) {
+        mmMarcusMixer = new THREE.AnimationMixer(mmMarcus);
+        mmMarcusMixer.clipAction(mmMarcus.animations[0]).play();
+      }
+      mmScene.add(mmMarcus);
+      const totalToLoad = INDUSTRIES.length + 1;
+      let mmLoadCount = 1;
+      if (mmLoaderFill) mmLoaderFill.style.width = ((mmLoadCount / totalToLoad) * 100) + '%';
+
+      // Load industry models in wide half-arc
+      const RADIUS = 8;
+      const BASE_Y = 3;
+      const HIT_SPHERE_RADIUS = 1.2;
+
+      for (let i = 0; i < INDUSTRIES.length; i++) {
+        const ind = INDUSTRIES[i];
+        const url = preloadCache[ind.path] || ind.path;
+        try {
+          const model = await loader.loadAsync(url);
+
+          // Normalize size: measure bounding box, scale to uniform ~1.5 units tall
+          const box = new THREE.Box3().setFromObject(model);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const targetSize = 1.5;
+          const uniformScale = targetSize / maxDim;
+          model.scale.setScalar(uniformScale);
+
+          // Position in arc
+          const angleRad = (ind.angle * Math.PI) / 180;
+          const x = Math.sin(angleRad) * RADIUS;
+          const z = -Math.cos(angleRad) * RADIUS + 1;
+          model.position.set(x, BASE_Y, z);
+
+          // Center the model on its position (offset by bounding box center)
+          const centeredBox = new THREE.Box3().setFromObject(model);
+          const center = new THREE.Vector3();
+          centeredBox.getCenter(center);
+          model.position.x += (model.position.x - center.x);
+          model.position.z += (model.position.z - center.z);
+
+          model.traverse(child => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              const mats = Array.isArray(child.material) ? child.material : [child.material];
+              mats.forEach(mat => {
+                mat.side = THREE.DoubleSide;
+                mat.needsUpdate = true;
+              });
+            }
+          });
+
+          model.userData.industryIndex = i;
+          model.userData.baseY = BASE_Y;
+          model.userData.baseScale = uniformScale;
+          model.userData.floatOffset = Math.random() * Math.PI * 2;
+          model.userData.spinSpeed = 0.3 + Math.random() * 0.2;
+
+          mmScene.add(model);
+          mmModels.push(model);
+
+          // Invisible hit sphere for easy hovering
+          const sphereGeo = new THREE.SphereGeometry(HIT_SPHERE_RADIUS, 16, 12);
+          const sphereMat = new THREE.MeshBasicMaterial({ visible: false });
+          const hitSphere = new THREE.Mesh(sphereGeo, sphereMat);
+          hitSphere.position.copy(model.position);
+          hitSphere.userData.industryIndex = i;
+          mmScene.add(hitSphere);
+          mmHitSpheres.push(hitSphere);
+
+          mmLoadCount++;
+          if (mmLoaderFill) mmLoaderFill.style.width = ((mmLoadCount / totalToLoad) * 100) + '%';
+
+        } catch (e) {
+          console.warn('Failed to load', ind.key, e);
+          mmModels.push(null);
+          mmHitSpheres.push(null);
+          mmLoadCount++;
+          if (mmLoaderFill) mmLoaderFill.style.width = ((mmLoadCount / totalToLoad) * 100) + '%';
+        }
+      }
+
+      mmLoaded = true;
+    }
+
+    function animateMindmap() {
+      if (!mmActive) return;
+      requestAnimationFrame(animateMindmap);
+
+      const delta = mmClock.getDelta();
+      const time = mmClock.elapsedTime;
+
+      if (mmMarcusMixer) mmMarcusMixer.update(delta);
+      // Intro 360 pan
+      if (mmIntroPanning) {
+        mmIntroAngle += (Math.PI * 2 / MM_INTRO_DURATION) * delta;
+        mmCamera.position.x = Math.sin(mmIntroAngle) * MM_INTRO_RADIUS;
+        mmCamera.position.y = MM_INTRO_HEIGHT;
+        mmCamera.position.z = Math.cos(mmIntroAngle) * MM_INTRO_RADIUS;
+        mmCamera.lookAt(MM_INTRO_TARGET);
+
+        if (mmIntroAngle >= Math.PI * 2) {
+          // Pan complete — settle back to default view
+          mmIntroPanning = false;
+          mmCamera.position.set(0, 7, 15);
+          mmCamera.lookAt(0, 2.5, -2);
+          mmControls.target.copy(MM_INTRO_TARGET);
+          mmControls.enabled = true;
+          mmControls.update();
+          hintEl.classList.add('visible');
+        }
+      }
+
+      if (mmControls && !mmIntroPanning) mmControls.update();
+
+      // Float and spin industry models
+      mmModels.forEach((model, i) => {
+        if (!model) return;
+        const ud = model.userData;
+        model.position.y = ud.baseY + Math.sin(time * 0.8 + ud.floatOffset) * 0.2;
+        model.rotation.y += ud.spinSpeed * delta;
+
+        // Scale up if hovered
+        const hoverScale = ud.baseScale * 1.25;
+        const normalScale = ud.baseScale;
+        const targetScale = i === mmHoveredIndex ? hoverScale : normalScale;
+        model.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+
+        // Sync invisible hit sphere position
+        if (mmHitSpheres[i]) {
+          mmHitSpheres[i].position.x = model.position.x;
+          mmHitSpheres[i].position.y = model.position.y;
+          mmHitSpheres[i].position.z = model.position.z;
+        }
+      });
+
+      // Raycaster against invisible hit spheres (much easier to hover)
+      mmRaycaster.setFromCamera(mmMouse, mmCamera);
+      const hitTargets = mmHitSpheres.filter(s => s !== null);
+      const hits = mmRaycaster.intersectObjects(hitTargets);
+
+      let newHovered = -1;
+      if (hits.length > 0) {
+        newHovered = hits[0].object.userData.industryIndex;
+      }
+
+      if (newHovered !== mmHoveredIndex && !mmInfoHovered) {
+        mmHoveredIndex = newHovered;
+        if (newHovered >= 0) {
+          const ind = INDUSTRIES[newHovered];
+          infoTitle.textContent = ind.title;
+          infoPeriod.textContent = ind.period;
+          infoDesc.innerHTML = ind.desc;
+
+          // Position info card near the model
+          const model = mmModels[newHovered];
+          if (model) {
+            const pos = model.position.clone();
+            pos.project(mmCamera);
+            const rect = wrapEl.getBoundingClientRect();
+            const px = ((pos.x + 1) / 2) * rect.width;
+            const py = ((-pos.y + 1) / 2) * rect.height;
+            // Offset to the side
+            const offsetX = pos.x > 0 ? -320 : 20;
+            infoEl.style.left = Math.max(0, Math.min(rect.width - 320, px + offsetX)) + 'px';
+            infoEl.style.top = Math.max(0, Math.min(rect.height - 160, py - 40)) + 'px';
+          }
+
+          infoEl.classList.add('visible');
+        } else {
+          infoEl.classList.remove('visible');
+        }
+      }
+
+      mmRenderer.render(mmScene, mmCamera);
+    }
+
+    // Mouse/touch tracking
+    wrapEl.addEventListener('mousemove', (e) => {
+      const rect = wrapEl.getBoundingClientRect();
+      mmMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mmMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    });
+
+    wrapEl.addEventListener('mouseleave', () => {
+      if (mmInfoHovered) return;
+      mmMouse.set(-999, -999);
+      mmHoveredIndex = -1;
+      infoEl.classList.remove('visible');
+    });
+
+    // Keep info card open when hovering over it
+    infoEl.addEventListener('mouseenter', () => { mmInfoHovered = true; });
+    infoEl.addEventListener('mouseleave', () => {
+      mmInfoHovered = false;
+      mmHoveredIndex = -1;
+      infoEl.classList.remove('visible');
+    });
+
+    // Mobile tap
+    wrapEl.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      const rect = wrapEl.getBoundingClientRect();
+      mmMouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+      mmMouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+    }, { passive: true });
+
+    // ── Intro pan state ──
+    let mmIntroPanning = false;
+    let mmIntroAngle = 0;
+    let mmLoading = false;
+    const MM_INTRO_DURATION = 6;
+    const MM_INTRO_RADIUS = 15;
+    const MM_INTRO_HEIGHT = 7;
+    const MM_INTRO_TARGET = new THREE.Vector3(0, 2.5, -2);
+
+    // ── Phase 1: Start loading when section first peeks into view ──
+    const mmSection = document.getElementById('mindmap');
+    let mmInitStarted = false;
+    let mmReadyToPlay = false;
+
+    const mmLoaderEl = document.getElementById('mindmapLoader');
+    const mmLoaderFill = document.getElementById('mindmapLoaderFill');
+
+    const mmPreloadObserver = new IntersectionObserver(async (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !mmInitStarted) {
+          mmInitStarted = true;
+          mmLoading = true;
+
+          initMindmap();
+          await loadMindmapModels();
+
+          // Hide loader
+          mmLoaderEl.style.opacity = '0';
+          setTimeout(() => { mmLoaderEl.style.display = 'none'; }, 500);
+
+          mmLoading = false;
+          mmReadyToPlay = true;
+          mmActive = true;
+          animateMindmap();
+
+          mmPreloadObserver.disconnect();
+        }
+      }
+    }, { threshold: 0.1 });
+    mmPreloadObserver.observe(mmSection);
+
+    // ── Phase 2: Intro pan starts when fullscreen activates ──
+    let mmPanTriggered = false;
+
+    function startIntroPan() {
+      if (mmPanTriggered) return;
+      mmPanTriggered = true;
+      window.__mindmapReady = true;
+      mmIntroPanning = true;
+      mmIntroAngle = 0;
+      if (mmControls) mmControls.enabled = false;
+    }
+
+    // Check on scroll — only for scroll lock during loading
+    window.addEventListener('scroll', () => {
+      if (mmLoading && mmInitStarted) {
+        const rect = mmSection.getBoundingClientRect();
+        if (rect.bottom < window.innerHeight + 100) {
+          window.scrollTo({ top: window.scrollY - 1 });
+        }
+      }
+    }, { passive: false });
+
+    // ── Mobile: fullscreen mindmap + exit button ──
+    const mmMobileExit = document.getElementById('mmMobileExit');
+    let mmFullscreen = false;
+
+    // Go fullscreen once models finish loading (both mobile and desktop)
+    const mmReadyCheck = setInterval(() => {
+      const mmRect = mmSection.getBoundingClientRect();
+      const mmCenter = mmRect.top + mmRect.height / 2;
+      const viewCenter = window.innerHeight / 2;
+      const isVisible = mmCenter > 0 && mmCenter < window.innerHeight && Math.abs(mmCenter - viewCenter) < window.innerHeight * 0.3;
+      if (mmReadyToPlay && isVisible) {
+        clearInterval(mmReadyCheck);
+        mmFullscreen = true;
+        mmSection.classList.add('mm-fullscreen');
+        document.body.style.overflow = 'hidden';
+
+        // Resize renderer to fullscreen
+        if (mmRenderer) {
+          mmRenderer.setSize(window.innerWidth, window.innerHeight);
+          mmCamera.aspect = window.innerWidth / window.innerHeight;
+          mmCamera.updateProjectionMatrix();
+        }
+
+        // Start the 360 intro pan now that we're fullscreen
+        setTimeout(() => startIntroPan(), 300);
+      }
+    }, 500);
+
+    mmMobileExit.addEventListener('click', () => {
+      mmFullscreen = false;
+      mmSection.classList.remove('mm-fullscreen');
+
+      // Trigger finale
+      window.__finaleFromMindmap = true;
+    });
+  </script>
+
+  <!-- ============================================================
+       3D FINALE ENGINE
+       ============================================================ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+    const MODELS = {
+      wave:  'Standing Greeting.fbx',
+      talk:  'Talking.fbx',
+      run:   'Running.fbx',
+      jump:  'Jump.fbx',
+      idle:  'Idle.fbx',
+    };
+
+    const finaleWrapper = document.getElementById('finaleWrapper');
+    const finaleCanvas  = document.getElementById('finaleCanvas');
+    const finaleSubtitle = document.getElementById('finaleSubtitle');
+    const finaleControls = document.getElementById('finaleControls');
+    const finaleBlackout = document.getElementById('finaleBlackout');
+    const finaleLoader   = document.getElementById('finaleLoader');
+    const finaleLoaderFill = document.getElementById('finaleLoaderFill');
+    const signalSection  = document.getElementById('signal');
+
+    let finaleActive = false;
+    let finaleLaunched = false;
+    let finaleLoaded = false;
+
+    // Three.js setup
+    let scene, camera, renderer, clock;
+    let mixers = {};
+    let models = {};
+    let activeModel = null;
+    let groundPlane;
+    let darknessFog;
+    let playerSpot;
+
+    // Player state
+    const playerPos = new THREE.Vector3(0, 0, 0);
+    let playerAngle = 0; // 0 = faces camera (+Z), Math.PI = faces away (-Z)
+    const keys = {};
+    let playerControlActive = false;
+    let darknessZ = -60;    // how far behind darkness starts (more negative = more runway)
+    let darknessSpeed = 1.2; // starting speed (lower = more time before it catches up)
+    let caughtByDarkness = false;
+    let isJumping = false;
+    let jumpTimer = 0;
+    const JUMP_DURATION = 1.0; // seconds — how long the jump animation plays
+
+    // Init scene (called once)
+    function initScene() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x080812);
+      scene.fog = new THREE.Fog(0x080812, 50, 120);
+
+      // ──────────────────────────────────────────────────
+      // CAMERA SETUP (intro/cutscene angle)
+      //   fov: 40 = tight, 55 = default, 75 = wide
+      // ──────────────────────────────────────────────────
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 300);
+
+      // ──────────────────────────────────────────────────
+      // INTRO CAMERA POSITION
+      //   .set(x, y, z) — x:left/right, y:height, z:distance
+      // ──────────────────────────────────────────────────
+      camera.position.set(0, 2.5, 6);
+
+      // ──────────────────────────────────────────────────
+      // INTRO LOOK-AT — y: 0=feet, 1=waist, 1.5=chest, 2=head
+      // ──────────────────────────────────────────────────
+      camera.lookAt(0, 1, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas: finaleCanvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      const _isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, _isMobile ? 1.5 : 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 2.0;
+
+      clock = new THREE.Clock();
+
+      // ── LIGHTING ──
+      const ambient = new THREE.AmbientLight(0xccddee, 1.5);
+      scene.add(ambient);
+
+      // Hemisphere light — sky color from above, ground bounce from below
+      const hemi = new THREE.HemisphereLight(0xaabbdd, 0x224444, 0.8);
+      scene.add(hemi);
+
+      const mainLight = new THREE.DirectionalLight(0xffeedd, 2.0);
+      mainLight.position.set(5, 12, 7);
+      mainLight.castShadow = true;
+      mainLight.shadow.mapSize.set(1024, 1024);
+      mainLight.shadow.camera.near = 0.5;
+      mainLight.shadow.camera.far = 80;
+      mainLight.shadow.camera.left = -20;
+      mainLight.shadow.camera.right = 20;
+      mainLight.shadow.camera.top = 20;
+      mainLight.shadow.camera.bottom = -20;
+      scene.add(mainLight);
+
+      // Front fill — lights up the character face during intro
+      const frontLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      frontLight.position.set(0, 4, 10);
+      scene.add(frontLight);
+
+      // Green rim from the right
+      const rimLight = new THREE.DirectionalLight(0x34D399, 0.8);
+      rimLight.position.set(-3, 5, -5);
+      scene.add(rimLight);
+
+      // Blue fill from the left
+      const fillLight = new THREE.DirectionalLight(0x3B82F6, 0.5);
+      fillLight.position.set(4, 3, -3);
+      scene.add(fillLight);
+
+      // ── GROUND — reflective futuristic runway ──
+      const groundGeo = new THREE.PlaneGeometry(60, 600);
+      const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x0c0c18,
+        roughness: 0.4,
+        metalness: 0.6,
+      });
+      groundPlane = new THREE.Mesh(groundGeo, groundMat);
+      groundPlane.rotation.x = -Math.PI / 2;
+      groundPlane.position.z = 200;
+      groundPlane.receiveShadow = true;
+      scene.add(groundPlane);
+
+      // Grid — brighter cyan lines
+      const gridHelper = new THREE.GridHelper(600, 200, 0x0d2a3a, 0x0d1a2a);
+      gridHelper.position.y = 0.01;
+      gridHelper.position.z = 200;
+      scene.add(gridHelper);
+
+      // ── NEON RUNWAY STRIPS — two glowing lines along the path ──
+      const stripMat = new THREE.MeshBasicMaterial({ color: 0x10B981, transparent: true, opacity: 0.5 });
+      for (const side of [-6, 6]) {
+        const stripGeo = new THREE.PlaneGeometry(0.15, 600);
+        const strip = new THREE.Mesh(stripGeo, stripMat);
+        strip.rotation.x = -Math.PI / 2;
+        strip.position.set(side, 0.02, 200);
+        scene.add(strip);
+      }
+
+      // ── FUTURISTIC PILLARS along the runway ──
+      const pillarGeo = new THREE.CylinderGeometry(0.08, 0.08, 8, 8);
+      const pillarMat = new THREE.MeshStandardMaterial({ color: 0x1a1a30, roughness: 0.3, metalness: 0.8 });
+      const ringGeo = new THREE.TorusGeometry(0.4, 0.04, 8, 24);
+      const ringMatGreen = new THREE.MeshBasicMaterial({ color: 0x10B981, transparent: true, opacity: 0.6 });
+      const ringMatBlue = new THREE.MeshBasicMaterial({ color: 0x3B82F6, transparent: true, opacity: 0.4 });
+
+      for (let z = -20; z > -500; z -= 14) {
+        for (const x of [-8, 8]) {
+          const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+          pillar.position.set(x, 4, z);
+          pillar.castShadow = true;
+          scene.add(pillar);
+
+          // Neon ring around pillar top
+          const ring = new THREE.Mesh(ringGeo, x < 0 ? ringMatGreen : ringMatBlue);
+          ring.position.set(x, 7.5, z);
+          ring.rotation.x = Math.PI / 2;
+          scene.add(ring);
+
+          // Point light at pillar top — every 3rd pillar to save perf
+          if (z % 42 === 0) {
+            const pl = new THREE.PointLight(x < 0 ? 0x10B981 : 0x3B82F6, 2, 20);
+            pl.position.set(x, 7, z);
+            scene.add(pl);
+          }
+        }
+      }
+
+      // ── FLOATING HOLOGRAPHIC RINGS — scattered in the sky ──
+      const holoRingGeo = new THREE.TorusGeometry(1.5, 0.02, 8, 48);
+      const holoMat = new THREE.MeshBasicMaterial({ color: 0x8B5CF6, transparent: true, opacity: 0.15 });
+      for (let i = 0; i < 20; i++) {
+        const hRing = new THREE.Mesh(holoRingGeo, holoMat);
+        hRing.position.set(
+          (Math.random() - 0.5) * 30,
+          6 + Math.random() * 10,
+          -Math.random() * 400
+        );
+        hRing.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        hRing.userData.floatSpeed = 0.3 + Math.random() * 0.5;
+        hRing.userData.floatOffset = Math.random() * Math.PI * 2;
+        hRing.userData.spinSpeed = 0.1 + Math.random() * 0.3;
+        scene.add(hRing);
+      }
+
+      // ── AMBIENT PARTICLES — tiny floating specs ──
+      const ambientParticleGeo = new THREE.BufferGeometry();
+      const apCount = 500;
+      const apPositions = new Float32Array(apCount * 3);
+      for (let i = 0; i < apCount; i++) {
+        apPositions[i * 3]     = (Math.random() - 0.5) * 40;
+        apPositions[i * 3 + 1] = Math.random() * 12;
+        apPositions[i * 3 + 2] = -Math.random() * 500;
+      }
+      ambientParticleGeo.setAttribute('position', new THREE.BufferAttribute(apPositions, 3));
+      const apMat = new THREE.PointsMaterial({
+        color: 0x34D399,
+        size: 0.06,
+        transparent: true,
+        opacity: 0.4,
+      });
+      const ambientParticles = new THREE.Points(ambientParticleGeo, apMat);
+      scene.add(ambientParticles);
+
+      // ── PLAYER SPOTLIGHT — follows the character ──
+      playerSpot = new THREE.SpotLight(0xffffff, 3, 30, Math.PI / 5, 0.5, 1);
+      playerSpot.position.set(0, 10, 0);
+      playerSpot.target.position.set(0, 0, 0);
+      scene.add(playerSpot);
+      scene.add(playerSpot.target);
+
+      // ── DARKNESS WALL ──
+      const darkGeo = new THREE.PlaneGeometry(80, 40);
+      const darkMat = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.97,
+      });
+      darknessFog = new THREE.Mesh(darkGeo, darkMat);
+      darknessFog.position.set(0, 14, darknessZ);
+      scene.add(darknessFog);
+
+      // Red/purple particles swirling in the darkness
+      const particleGeo = new THREE.BufferGeometry();
+      const particleCount = 300;
+      const positions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3]     = (Math.random() - 0.5) * 60;
+        positions[i * 3 + 1] = Math.random() * 20;
+        positions[i * 3 + 2] = Math.random() * 15;
+      }
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const particleMat = new THREE.PointsMaterial({
+        color: 0x440022,
+        size: 0.2,
+        transparent: true,
+        opacity: 0.7,
+      });
+      const darkParticles = new THREE.Points(particleGeo, particleMat);
+      darknessFog.add(darkParticles);
+
+      // Red glow on the darkness wall
+      const darkGlow = new THREE.PointLight(0xEF4444, 3, 25);
+      darkGlow.position.set(0, 5, 5);
+      darknessFog.add(darkGlow);
+
+      window.addEventListener('resize', () => {
+        if (!finaleActive) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    // Load models
+    async function loadModels() {
+      const loader = new FBXLoader();
+      const textureLoader = new THREE.TextureLoader();
+      const entries = Object.entries(MODELS);
+      let loaded = 0;
+
+      // Load texture (FBX from Mixamo may or may not embed it)
+      let charTexture = null;
+      try {
+        charTexture = await textureLoader.loadAsync('Meshy_AI_Confident_Professiona_0416125024_texture.png');
+        charTexture.flipY = true; // FBX uses standard UV orientation
+        charTexture.colorSpace = THREE.SRGBColorSpace;
+      } catch (e) {
+        console.warn('Texture not found, using model defaults');
+      }
+
+      for (const [key, url] of entries) {
+        const cachedUrl = (window.__preloadCache && window.__preloadCache[url]) || url;
+        const model = await loader.loadAsync(cachedUrl);
+
+        // FBX models from Mixamo are usually huge — scale down
+        // ──────────────────────────────────────────────────
+        // MODEL SCALE — adjust if character is too big/small
+        //   0.01 = typical Mixamo FBX scale (they export in cm)
+        //   0.02 = double size, 0.005 = half size
+        // ──────────────────────────────────────────────────
+        model.scale.setScalar(0.01);
+
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.frustumCulled = false;
+
+            // Force character texture onto all materials
+            const mats = Array.isArray(child.material) ? child.material : [child.material];
+            mats.forEach(mat => {
+              if (charTexture) {
+                mat.map = charTexture;
+              }
+              mat.side = THREE.DoubleSide;
+              mat.depthWrite = true;
+              mat.needsUpdate = true;
+            });
+          }
+        });
+
+        model.visible = false;
+        scene.add(model);
+
+        // Set up animation mixer
+        if (model.animations && model.animations.length > 0) {
+          const mixer = new THREE.AnimationMixer(model);
+          const action = mixer.clipAction(model.animations[0]);
+          action.play();
+          mixers[key] = mixer;
+        }
+
+        models[key] = model;
+        loaded++;
+        finaleLoaderFill.style.width = ((loaded / entries.length) * 100) + '%';
+      }
+
+      finaleLoaded = true;
+    }
+
+    function switchModel(key) {
+      if (activeModel === key) return; // already showing
+      // Hide all
+      Object.values(models).forEach(m => m.visible = false);
+      if (models[key]) {
+        models[key].visible = true;
+        models[key].position.copy(playerPos);
+        models[key].rotation.y = playerAngle;
+        activeModel = key;
+      }
+    }
+
+    function showSubtitle(text) {
+      finaleSubtitle.textContent = text;
+      finaleSubtitle.classList.add('visible');
+    }
+    function hideSubtitle() {
+      finaleSubtitle.classList.remove('visible');
+    }
+
+    // ── THE FINALE SEQUENCE ──
+    async function startFinale() {
+      if (finaleLaunched) return;
+      finaleLaunched = true;
+
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('in-space');
+      finaleWrapper.classList.add('active');
+
+      initScene();
+
+      // Load with progress
+      await loadModels();
+
+      // Hide loader
+      finaleLoader.style.opacity = '0';
+      setTimeout(() => { finaleLoader.style.display = 'none'; }, 500);
+
+      finaleActive = true;
+      animate();
+
+      // Phase 1: Character appears and waves (3s)
+      switchModel('wave');
+      await wait(1500);
+      showSubtitle('Hey there...');
+
+      // Phase 2: Talk (4s)
+      await wait(2500);
+      switchModel('talk');
+      showSubtitle('Oh no... the past is starting to catch up');
+
+      await wait(3500);
+      showSubtitle("Let's run towards the future!");
+
+      await wait(2500);
+
+      // Phase 3: Player control
+      hideSubtitle();
+      activeModel = null; // force switchModel to apply
+      switchModel('idle');
+      playerControlActive = true;
+      finaleControls.classList.add('visible');
+      mobileControls.classList.add('visible');
+
+      // Start darkness creeping (matches initial speed)
+      darknessSpeed = 1.2;
+
+      await wait(2000);
+      finaleControls.classList.remove('visible');
+
+      showSubtitle('Run!');
+      await wait(1500);
+      hideSubtitle();
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // ── GAME LOOP ──
+    function animate() {
+      if (!finaleActive) return;
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+
+      // Update all mixers
+      Object.values(mixers).forEach(m => m.update(delta));
+
+      // Player movement
+      if (playerControlActive && !caughtByDarkness) {
+        // Read inputs — forward is -Z (into the screen)
+        let inputX = 0, inputZ = 0;
+        const speed = 7;
+
+        if (keys['w'] || keys['arrowup'])    inputZ = -1;
+        if (keys['s'] || keys['arrowdown'])  inputZ = 1;
+        if (keys['a'] || keys['arrowleft'])  inputX = -1;
+        if (keys['d'] || keys['arrowright']) inputX = 1;
+
+        const isMoving = (inputX !== 0 || inputZ !== 0);
+
+        // Jump on space
+        if (keys[' '] && !isJumping) {
+          isJumping = true;
+          jumpTimer = JUMP_DURATION;
+          activeModel = null; // force switch
+          switchModel('jump');
+          keys[' '] = false; // consume the press
+        }
+
+        // Track jump timer
+        if (isJumping) {
+          jumpTimer -= delta;
+          if (jumpTimer <= 0) {
+            isJumping = false;
+            activeModel = null; // force re-evaluation below
+          }
+        }
+
+        // Swap between run/idle (jump overrides both)
+        if (!isJumping) {
+          if (isMoving) {
+            switchModel('run');
+          } else {
+            switchModel('idle');
+          }
+        }
+
+        if (isMoving) {
+          // Normalize diagonal movement
+          const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
+          const nx = inputX / len;
+          const nz = inputZ / len;
+
+          playerPos.x += nx * speed * delta;
+          playerPos.z += nz * speed * delta;
+
+          // Clamp sideways
+          playerPos.x = THREE.MathUtils.clamp(playerPos.x, -8, 8);
+
+          // Face the direction of movement
+          // atan2(x, z) gives angle from +Z axis. Model default faces +Z.
+          const targetAngle = Math.atan2(nx, nz);
+          // Smooth rotation — handle wrapping
+          let angleDiff = targetAngle - playerAngle;
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+          playerAngle += angleDiff * 0.12;
+        }
+
+        // Sync all model transforms (only active one is visible)
+        Object.values(models).forEach(m => {
+          m.position.x = playerPos.x;
+          m.position.z = playerPos.z;
+          m.rotation.y = playerAngle;
+        });
+
+        // ──────────────────────────────────────────────────
+        // GAMEPLAY CAMERA — follows behind the player
+        //
+        //   camOffset = where the camera WANTS to be (it lerps there smoothly)
+        //     x: playerPos.x * 0.4  — how much camera follows sideways (0 = centered, 1 = matches player)
+        //     y: 3                   — camera height during gameplay
+        //     z: playerPos.z + 8    — how far BEHIND the player (+8 = 8 units behind)
+        //
+        //   Try these for different feels:
+        //     y:1.5, z:+4   — low chase cam, very close (intense)
+        //     y:3,   z:+8   — default third person
+        //     y:6,   z:+12  — high and far (strategy/overview feel)
+        //     y:2,   z:+6   — classic action game
+        //     y:10,  z:+2   — almost top-down
+        //
+        //   lerp(target, alpha) — alpha is follow speed
+        //     0.02 = very lazy/cinematic camera
+        //     0.05 = default smooth
+        //     0.15 = snappy, responsive
+        //     1.0  = instant (no smoothing)
+        //
+        //   lookAt — where camera POINTS at
+        //     y: 1     — looks at player's waist
+        //     z: -2    — looks slightly AHEAD of the player
+        //     Change z to -5 to look further ahead, or 0 to look right at player
+        // ──────────────────────────────────────────────────
+        const camOffset = new THREE.Vector3(
+          playerPos.x * 0.4,     // sideways follow (tweak 0.0–1.0)
+          3,                     // height
+          playerPos.z + 8        // distance behind (+bigger = further)
+        );
+        camera.position.lerp(camOffset, 0.05);  // follow smoothness
+        camera.lookAt(playerPos.x * 0.3, 1, playerPos.z - 2);  // aim point
+
+        // Move ground/grid to follow player
+        groundPlane.position.z = playerPos.z + 200;
+        scene.children.forEach(c => {
+          if (c.isGridHelper) c.position.z = playerPos.z + 200;
+        });
+
+        // Spotlight follows player
+        playerSpot.position.set(playerPos.x, 10, playerPos.z + 3);
+        playerSpot.target.position.set(playerPos.x, 0, playerPos.z);
+
+        // Animate holographic rings (float + spin)
+        const time = clock.elapsedTime;
+        scene.children.forEach(c => {
+          if (c.isMesh && c.userData.floatSpeed) {
+            c.position.y += Math.sin(time * c.userData.floatSpeed + c.userData.floatOffset) * 0.003;
+            c.rotation.z += c.userData.spinSpeed * delta;
+          }
+        });
+
+        // Darkness chases — always advances
+        darknessZ += darknessSpeed * delta;
+        darknessSpeed += 0.06 * delta; // slowly accelerates (lower = longer game)
+        darknessFog.position.z = darknessZ;
+        darknessFog.position.x = playerPos.x * 0.2;
+
+        // Spin darkness particles
+        darknessFog.children.forEach(child => {
+          if (child.isPoints) child.rotation.y += delta * 0.3;
+        });
+
+        // Tighten fog as darkness approaches
+        const dist = playerPos.z - darknessZ;
+        scene.fog.near = Math.max(8, dist * 0.4);
+        scene.fog.far = Math.max(40, dist + 50);
+
+        // Caught!
+        if (darknessZ > playerPos.z - 2) {
+          caughtByDarkness = true;
+          playerControlActive = false;
+          mobileControls.classList.remove('visible');
+          endFinale();
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    async function endFinale() {
+      // Darkness catches player
+      showSubtitle('...');
+      await wait(1000);
+      hideSubtitle();
+
+      // Black out
+      finaleBlackout.classList.add('active');
+
+      // Wait for the final text to show and linger
+      await wait(5000);
+
+      // Transition to contact
+      finaleWrapper.classList.remove('active');
+      finaleActive = false;
+      document.body.style.overflow = '';
+      document.body.classList.remove('in-space');
+
+      // Reveal signal section and footer
+      signalSection.style.visibility = '';
+      document.getElementById('siteFooter').style.visibility = '';
+
+      // Scroll to signal/contact
+      signalSection.scrollIntoView({ behavior: 'instant', block: 'start' });
+
+      // Trigger reveals
+      signalSection.querySelectorAll('.reveal').forEach(el => {
+        el.classList.remove('visible');
+        void el.offsetHeight;
+      });
+
+      // Small delay then re-observe
+      await wait(100);
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+      }, { threshold: 0.1 });
+      signalSection.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    }
+
+    // Key listeners (work globally but only used in finale)
+    document.addEventListener('keydown', (e) => {
+      keys[e.key.toLowerCase()] = true;
+    });
+    document.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    // ── Mobile touch controls ──
+    const mobileControls = document.getElementById('mobileControls');
+    mobileControls.querySelectorAll('[data-key]').forEach(btn => {
+      const key = btn.dataset.key;
+      // Touch start = key down
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys[key] = true;
+      }, { passive: false });
+      // Touch end = key up
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys[key] = false;
+      }, { passive: false });
+      // Cancel too
+      btn.addEventListener('touchcancel', () => {
+        keys[key] = false;
+      });
+    });
+
+    // ── Trigger finale when Journey is scrolled past ──
+    const finaleTrigger = document.getElementById('finale-trigger');
+    let finaleTriggered = false;
+
+    // Trigger finale when the finale-trigger element scrolls into view
+    // and the mindmap section is above the viewport
+    const mindmapEl = document.getElementById('mindmap');
+
+    function checkFinale() {
+      if (finaleTriggered) return;
+      if (document.body.classList.contains('in-space')) return;
+
+      // Mobile: triggered by "Continue to the finale" button only
+      if (window.__finaleFromMindmap) {
+        window.__finaleFromMindmap = false;
+        finaleTriggered = true;
+        startFinale();
+        return;
+      }
+
+      // Block desktop path while mindmap is fullscreen on mobile
+      if (document.querySelector('.mm-fullscreen')) return;
+
+      // Desktop: trigger when mindmap scrolls past
+      if (!window.__mindmapReady) return;
+      const mmRect = mindmapEl.getBoundingClientRect();
+      if (mmRect.bottom < window.innerHeight * 0.4 && mmRect.bottom > -500) {
+        finaleTriggered = true;
+        startFinale();
+      }
+    }
+
+    window.addEventListener('scroll', checkFinale, { passive: true });
+    // Also poll for mobile button trigger (no scroll event fires when locked)
+    setInterval(checkFinale, 500);
+  </script>
+
+</body>
+</html>
