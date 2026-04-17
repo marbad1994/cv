@@ -1157,6 +1157,92 @@
     .finale-final-text .accent { color: var(--accent-bright); font-style: italic; }
 
     /* ============================================================
+       3D MINDMAP — Industry Experience
+       ============================================================ */
+    .mindmap-section {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+    }
+    .mindmap-canvas-wrap {
+      width: 100%;
+      max-width: 1300px;
+      aspect-ratio: 16 / 9;
+      position: relative;
+      margin: 0 auto;
+    }
+    .mindmap-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      display: block;
+    }
+    .mindmap-info {
+      position: absolute;
+      pointer-events: auto;
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      max-width: 300px;
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+      transition: opacity 0.35s var(--ease-out-expo), transform 0.35s var(--ease-out-expo);
+      z-index: 20;
+    }
+    .mindmap-info.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .mindmap-info-title {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+    .mindmap-info-period {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .mindmap-info-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+    .mindmap-hint {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+    .mindmap-hint.visible { opacity: 1; }
+
+    @media (max-width: 768px) {
+      .mindmap-canvas-wrap { aspect-ratio: 4 / 3; }
+      .mindmap-info { max-width: 240px; padding: 1rem 1.25rem; }
+      .mindmap-info-title { font-size: 0.95rem; }
+      .mindmap-info-desc { font-size: 0.8rem; }
+    }
+
+    /* ============================================================
        MOBILE TOUCH CONTROLS (3D finale)
        ============================================================ */
     .mobile-touch-controls {
@@ -2189,6 +2275,27 @@
     </div>
   </section>
 
+  <!-- ============================================================
+       3D MINDMAP — Industries
+       ============================================================ -->
+  <section class="mindmap-section" id="mindmap">
+    <div class="mindmap-canvas-wrap reveal reveal-scale">
+      <canvas class="mindmap-canvas" id="mindmapCanvas"></canvas>
+      <div id="mindmapLoader" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.75rem;background:var(--bg-void);z-index:5;transition:opacity 0.5s;">
+        <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);letter-spacing:0.1em;">Loading 3D models...</div>
+        <div style="width:160px;height:2px;background:var(--bg-elevated);border-radius:1px;overflow:hidden;">
+          <div id="mindmapLoaderFill" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
+        </div>
+      </div>
+      <div class="mindmap-info" id="mindmapInfo">
+        <div class="mindmap-info-title" id="mindmapInfoTitle"></div>
+        <div class="mindmap-info-period" id="mindmapInfoPeriod"></div>
+        <div class="mindmap-info-desc" id="mindmapInfoDesc"></div>
+      </div>
+      <div class="mindmap-hint" id="mindmapHint">Hover to explore industries</div>
+    </div>
+  </section>
+
   <!-- Finale trigger sentinel -->
   <div id="finale-trigger" style="height: 1px;"></div>
 
@@ -2231,7 +2338,7 @@
   <!-- ============================================================
        CHAPTER V: THE SIGNAL
        ============================================================ -->
-  <section class="chapter" id="signal" style="min-height: auto; padding-bottom: 0;">
+  <section class="chapter" id="signal" style="min-height: auto; padding-bottom: 0; visibility: hidden;">
     <div class="chapter-inner" style="text-align: center;">
       <div class="chapter-number reveal" style="text-align: center;">Chapter V &mdash; Signal</div>
       <h2 class="chapter-heading reveal reveal-delay-1" style="margin-left: auto; margin-right: auto;">
@@ -2384,7 +2491,7 @@
     </div>
   </section>
 
-  <footer style="padding: 1.5rem 2rem; text-align: center; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.1em;">
+  <footer id="siteFooter" style="padding: 1.5rem 2rem; text-align: center; font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.1em; visibility: hidden;">
     &copy; <span id="currentYear"></span> Marcus &mdash; Crafted frame by frame.
   </footer>
 
@@ -2879,6 +2986,506 @@
   </script>
 
   <!-- ============================================================
+       3D MINDMAP ENGINE + BACKGROUND PRELOADER
+       ============================================================ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ── Industry data ──
+    const INDUSTRIES = [
+      {
+        key: 'tooth',
+        path: 'models/mindmap/tooth/Meshy_AI_Molar_Tooth_0417112220_texture_fbx/Meshy_AI_Molar_Tooth_0417112220_texture.fbx',
+        title: 'Dental Industry',
+        period: '',
+        desc: 'As a techlead at one of the most prominent AI companies within dentistry, in Europe, my responsibilities ícludes frontend where there is always a balance between new features and maintaining legacy, backend where stability and inference time is of highest importance and deployment and architecture through AWS.',
+        angle: -90,
+      },
+      {
+        key: 'plane',
+        path: 'models/mindmap/plane/Meshy_AI_Takeoff_into_the_Blue_0417114540_texture_fbx/Meshy_AI_Takeoff_into_the_Blue_0417114540_texture.fbx',
+        title: 'Aviation',
+        period: '',
+        desc: 'I was a part of a team who provided crew planning software for major airlines in America and South East Asia. My role was to develop business logic and have it comply with different aviation regulations such as FAA and EASA. I also worked on the rostering system which was responsible for assigning crew members to flights while considering various constraints and preferences.',
+        angle: -60,
+      },
+      {
+        key: 'train',
+        path: 'models/mindmap/train/Meshy_AI_Train_0417113107_texture_fbx/Meshy_AI_Train_0417113107_texture.fbx',
+        title: 'Rail & Transport',
+        period: '',
+        desc: 'I began my career in the rail industry to configure the autmoated trafic management systems. This is where I got to expand my knowledge within scrum and agile frameworks to later be agile coach and guiding seven teams and two offices into the agile framework. This was also the place tha fostered me as a devloper and had me working with innovative development as well as being on site and deploying',
+        angle: -30,
+      },
+      {
+        key: '5g',
+        path: 'models/mindmap/5g/Meshy_AI_Digital_Shield_0417115135_texture_fbx/Meshy_AI_Digital_Shield_0417115135_texture.fbx',
+        title: 'Telecom & 5G',
+        period: '',
+        desc: 'I spent over three years at the worlds largest telecom provider, working with their 5G network security testing system. My role involved developing and maintaining software solutions to automatically security test the 5G network infrastructure, ensuring its robustness against potential cyber threats. This experience allowed me to gain deep insights into the telecom industry and the critical importance of network security in the era of 5G connectivity.',
+        angle: 0,
+      },
+      {
+        key: 'partplanning',
+        path: 'models/mindmap/partplanning/Meshy_AI_Lollipop_Party_Dragon_0417114515_texture_fbx/Meshy_AI_Lollipop_Party_Dragon_0417114515_texture.fbx',
+        title: 'Event Planning',
+        period: '',
+        desc: 'I worked as a fullstack developer in a team of two with the extremely talented <a href="https://www.linkedin.com/in/betina-a-671916138/" target="_blank" rel="noopener" style="color:var(--accent-bright);text-decoration:underline;">Betina Andersson</a> to develop an event planning app for children birthday parties. The app allowed users to create and manage their party guest lists, send out invitations, and organize party details in a fun and interactive way. This experience was particularly rewarding as it let me be part of the start, the planning, the devolpment and the launch of the app for a startup company.',
+        angle: 30,
+      },
+      {
+        key: 'teacher',
+        path: 'models/mindmap/teacher/Meshy_AI_Graduation_Cap_and_Di_0417114826_texture_fbx/Meshy_AI_Graduation_Cap_and_Di_0417114826_texture.fbx',
+        title: 'Education',
+        period: '',
+        desc: 'During covid I took the opportunity to share my knowledge and passion for software development by teaching programming for trade schools in Gothenburg. I taught agile project management, scripting in python on bash and Java. My personal goal was to teach them to be language agnostic and focused more about concepts rather than syntax. I am proud to say I had a 4.9/5 rating from my students and I am grateful for the opportunity to have inspired and educated the next generation of developers.',
+        angle: 60,
+      },
+      {
+        key: 'discgolf',
+        path: 'models/mindmap/discgolf/Meshy_AI_Disc_Golf_Basket_0417114749_texture_fbx/Meshy_AI_Disc_Golf_Basket_0417114749_texture.fbx',
+        title: 'Disc Golf',
+        period: '',
+        desc: 'I worked alongside <a href="https://www.linkedin.com/in/carolineimbader/" target="_blank" rel="noopener" style="color:var(--accent-bright);text-decoration:underline;">Caroline Bader</a> to develop Swedens biggest disc golf league and series platform. The platform allowed players to register for tournaments, track their scores, and connect with other players in the disc golf community. This project was challengeing as it required us to think outside the box to create a dynamic CMS for the client to build his own sub pages without creating a full website creator',
+        angle: 90,
+      },
+    ];
+
+    // ── Background preloader — staggered, non-blocking ──
+    const preloadCache = {};
+    window.__preloadCache = preloadCache;
+
+    async function preloadStaggered() {
+      // Prioritize smaller finale models first, then mindmap models
+      const queue = [
+        'Idle.fbx', 'Running.fbx', 'Jump.fbx', 'Standing Greeting.fbx', 'Talking.fbx',
+        ...INDUSTRIES.map(i => i.path),
+      ];
+
+      // Load 2 at a time to avoid network saturation
+      for (let i = 0; i < queue.length; i += 2) {
+        const batch = queue.slice(i, i + 2);
+        await Promise.allSettled(
+          batch.map(url =>
+            fetch(url)
+              .then(r => r.blob())
+              .then(blob => { preloadCache[url] = URL.createObjectURL(blob); })
+              .catch(() => {})
+          )
+        );
+      }
+    }
+
+    // Start preloading after a short delay so the page paints first
+    setTimeout(preloadStaggered, 1500);
+
+    // ── Mindmap Scene ──
+    const canvas = document.getElementById('mindmapCanvas');
+    const infoEl = document.getElementById('mindmapInfo');
+    const infoTitle = document.getElementById('mindmapInfoTitle');
+    const infoPeriod = document.getElementById('mindmapInfoPeriod');
+    const infoDesc = document.getElementById('mindmapInfoDesc');
+    const hintEl = document.getElementById('mindmapHint');
+    const wrapEl = canvas.parentElement;
+
+    let mmScene, mmCamera, mmRenderer, mmClock, mmControls;
+    let mmActive = false;
+    let mmLoaded = false;
+    let mmModels = [];
+    let mmHitSpheres = [];
+    let mmMarcus = null;
+    let mmMarcusMixer = null;
+    let mmRaycaster = new THREE.Raycaster();
+    let mmMouse = new THREE.Vector2(-999, -999);
+    let mmHoveredIndex = -1;
+    let mmInfoHovered = false;
+
+    function initMindmap() {
+      const w = wrapEl.clientWidth;
+      const h = wrapEl.clientHeight;
+
+      mmScene = new THREE.Scene();
+      mmScene.background = new THREE.Color(0x09090B);
+
+      // Camera — zoomed out so whole scene is comfortable
+      mmCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+      mmCamera.position.set(0, 7, 15);
+      mmCamera.lookAt(0, 2.5, -2);
+
+      mmRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      mmRenderer.setSize(w, h);
+      mmRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      mmRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      mmRenderer.toneMappingExposure = 1.6;
+
+      mmClock = new THREE.Clock();
+
+      // Orbit controls — zoom and pan
+      mmControls = new OrbitControls(mmCamera, canvas);
+      mmControls.enableDamping = true;
+      mmControls.dampingFactor = 0.08;
+      mmControls.enablePan = true;
+      mmControls.enableZoom = true;
+      mmControls.minDistance = 5;
+      mmControls.maxDistance = 25;
+      mmControls.maxPolarAngle = Math.PI / 2.1;
+      mmControls.target.set(0, 2.5, -2);
+      mmControls.update();
+
+      // Lights
+      mmScene.add(new THREE.AmbientLight(0xccddee, 1.2));
+      mmScene.add(new THREE.HemisphereLight(0xaabbdd, 0x224444, 0.6));
+
+      const main = new THREE.DirectionalLight(0xffeedd, 1.5);
+      main.position.set(4, 8, 6);
+      mmScene.add(main);
+
+      const rim = new THREE.DirectionalLight(0x34D399, 0.5);
+      rim.position.set(-4, 4, -3);
+      mmScene.add(rim);
+
+      // Ground — subtle reflective circle
+      const groundGeo = new THREE.CircleGeometry(14, 64);
+      const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x0c0c18,
+        roughness: 0.5,
+        metalness: 0.5,
+      });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.01;
+      mmScene.add(ground);
+
+      // Resize
+      window.addEventListener('resize', () => {
+        if (!mmActive) return;
+        const nw = wrapEl.clientWidth;
+        const nh = wrapEl.clientHeight;
+        mmCamera.aspect = nw / nh;
+        mmCamera.updateProjectionMatrix();
+        mmRenderer.setSize(nw, nh);
+      });
+    }
+
+    async function loadMindmapModels() {
+      const loader = new FBXLoader();
+
+      // Load Marcus idle
+      const marcusUrl = preloadCache['Idle.fbx'] || 'Idle.fbx';
+      mmMarcus = await loader.loadAsync(marcusUrl);
+      mmMarcus.scale.setScalar(0.01);
+      mmMarcus.position.set(0, 0, 0);
+
+      // Apply texture
+      const texLoader = new THREE.TextureLoader();
+      let charTex = null;
+      try {
+        charTex = await texLoader.loadAsync('Meshy_AI_Confident_Professiona_0416125024_texture.png');
+        charTex.flipY = true;
+        charTex.colorSpace = THREE.SRGBColorSpace;
+      } catch (e) {}
+
+      mmMarcus.traverse(child => {
+        if (child.isMesh) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(mat => {
+            if (charTex) mat.map = charTex;
+            mat.side = THREE.DoubleSide;
+            mat.needsUpdate = true;
+          });
+        }
+      });
+
+      if (mmMarcus.animations?.length > 0) {
+        mmMarcusMixer = new THREE.AnimationMixer(mmMarcus);
+        mmMarcusMixer.clipAction(mmMarcus.animations[0]).play();
+      }
+      mmScene.add(mmMarcus);
+      const totalToLoad = INDUSTRIES.length + 1;
+      let mmLoadCount = 1;
+      if (mmLoaderFill) mmLoaderFill.style.width = ((mmLoadCount / totalToLoad) * 100) + '%';
+
+      // Load industry models in wide half-arc
+      const RADIUS = 8;
+      const BASE_Y = 3;
+      const HIT_SPHERE_RADIUS = 1.2;
+
+      for (let i = 0; i < INDUSTRIES.length; i++) {
+        const ind = INDUSTRIES[i];
+        const url = preloadCache[ind.path] || ind.path;
+        try {
+          const model = await loader.loadAsync(url);
+
+          // Normalize size: measure bounding box, scale to uniform ~1.5 units tall
+          const box = new THREE.Box3().setFromObject(model);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const targetSize = 1.5;
+          const uniformScale = targetSize / maxDim;
+          model.scale.setScalar(uniformScale);
+
+          // Position in arc
+          const angleRad = (ind.angle * Math.PI) / 180;
+          const x = Math.sin(angleRad) * RADIUS;
+          const z = -Math.cos(angleRad) * RADIUS + 1;
+          model.position.set(x, BASE_Y, z);
+
+          // Center the model on its position (offset by bounding box center)
+          const centeredBox = new THREE.Box3().setFromObject(model);
+          const center = new THREE.Vector3();
+          centeredBox.getCenter(center);
+          model.position.x += (model.position.x - center.x);
+          model.position.z += (model.position.z - center.z);
+
+          model.traverse(child => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              const mats = Array.isArray(child.material) ? child.material : [child.material];
+              mats.forEach(mat => {
+                mat.side = THREE.DoubleSide;
+                mat.needsUpdate = true;
+              });
+            }
+          });
+
+          model.userData.industryIndex = i;
+          model.userData.baseY = BASE_Y;
+          model.userData.baseScale = uniformScale;
+          model.userData.floatOffset = Math.random() * Math.PI * 2;
+          model.userData.spinSpeed = 0.3 + Math.random() * 0.2;
+
+          mmScene.add(model);
+          mmModels.push(model);
+
+          // Invisible hit sphere for easy hovering
+          const sphereGeo = new THREE.SphereGeometry(HIT_SPHERE_RADIUS, 16, 12);
+          const sphereMat = new THREE.MeshBasicMaterial({ visible: false });
+          const hitSphere = new THREE.Mesh(sphereGeo, sphereMat);
+          hitSphere.position.copy(model.position);
+          hitSphere.userData.industryIndex = i;
+          mmScene.add(hitSphere);
+          mmHitSpheres.push(hitSphere);
+
+          mmLoadCount++;
+          if (mmLoaderFill) mmLoaderFill.style.width = ((mmLoadCount / totalToLoad) * 100) + '%';
+
+        } catch (e) {
+          console.warn('Failed to load', ind.key, e);
+          mmModels.push(null);
+          mmHitSpheres.push(null);
+          mmLoadCount++;
+          if (mmLoaderFill) mmLoaderFill.style.width = ((mmLoadCount / totalToLoad) * 100) + '%';
+        }
+      }
+
+      mmLoaded = true;
+    }
+
+    function animateMindmap() {
+      if (!mmActive) return;
+      requestAnimationFrame(animateMindmap);
+
+      const delta = mmClock.getDelta();
+      const time = mmClock.elapsedTime;
+
+      if (mmMarcusMixer) mmMarcusMixer.update(delta);
+      // Intro 360 pan
+      if (mmIntroPanning) {
+        mmIntroAngle += (Math.PI * 2 / MM_INTRO_DURATION) * delta;
+        mmCamera.position.x = Math.sin(mmIntroAngle) * MM_INTRO_RADIUS;
+        mmCamera.position.y = MM_INTRO_HEIGHT;
+        mmCamera.position.z = Math.cos(mmIntroAngle) * MM_INTRO_RADIUS;
+        mmCamera.lookAt(MM_INTRO_TARGET);
+
+        if (mmIntroAngle >= Math.PI * 2) {
+          // Pan complete — settle back to default view
+          mmIntroPanning = false;
+          mmCamera.position.set(0, 7, 15);
+          mmCamera.lookAt(0, 2.5, -2);
+          mmControls.target.copy(MM_INTRO_TARGET);
+          mmControls.enabled = true;
+          mmControls.update();
+          hintEl.classList.add('visible');
+        }
+      }
+
+      if (mmControls && !mmIntroPanning) mmControls.update();
+
+      // Float and spin industry models
+      mmModels.forEach((model, i) => {
+        if (!model) return;
+        const ud = model.userData;
+        model.position.y = ud.baseY + Math.sin(time * 0.8 + ud.floatOffset) * 0.2;
+        model.rotation.y += ud.spinSpeed * delta;
+
+        // Scale up if hovered
+        const hoverScale = ud.baseScale * 1.25;
+        const normalScale = ud.baseScale;
+        const targetScale = i === mmHoveredIndex ? hoverScale : normalScale;
+        model.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+
+        // Sync invisible hit sphere position
+        if (mmHitSpheres[i]) {
+          mmHitSpheres[i].position.x = model.position.x;
+          mmHitSpheres[i].position.y = model.position.y;
+          mmHitSpheres[i].position.z = model.position.z;
+        }
+      });
+
+      // Raycaster against invisible hit spheres (much easier to hover)
+      mmRaycaster.setFromCamera(mmMouse, mmCamera);
+      const hitTargets = mmHitSpheres.filter(s => s !== null);
+      const hits = mmRaycaster.intersectObjects(hitTargets);
+
+      let newHovered = -1;
+      if (hits.length > 0) {
+        newHovered = hits[0].object.userData.industryIndex;
+      }
+
+      if (newHovered !== mmHoveredIndex && !mmInfoHovered) {
+        mmHoveredIndex = newHovered;
+        if (newHovered >= 0) {
+          const ind = INDUSTRIES[newHovered];
+          infoTitle.textContent = ind.title;
+          infoPeriod.textContent = ind.period;
+          infoDesc.innerHTML = ind.desc;
+
+          // Position info card near the model
+          const model = mmModels[newHovered];
+          if (model) {
+            const pos = model.position.clone();
+            pos.project(mmCamera);
+            const rect = wrapEl.getBoundingClientRect();
+            const px = ((pos.x + 1) / 2) * rect.width;
+            const py = ((-pos.y + 1) / 2) * rect.height;
+            // Offset to the side
+            const offsetX = pos.x > 0 ? -320 : 20;
+            infoEl.style.left = Math.max(0, Math.min(rect.width - 320, px + offsetX)) + 'px';
+            infoEl.style.top = Math.max(0, Math.min(rect.height - 160, py - 40)) + 'px';
+          }
+
+          infoEl.classList.add('visible');
+        } else {
+          infoEl.classList.remove('visible');
+        }
+      }
+
+      mmRenderer.render(mmScene, mmCamera);
+    }
+
+    // Mouse/touch tracking
+    wrapEl.addEventListener('mousemove', (e) => {
+      const rect = wrapEl.getBoundingClientRect();
+      mmMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mmMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    });
+
+    wrapEl.addEventListener('mouseleave', () => {
+      if (mmInfoHovered) return;
+      mmMouse.set(-999, -999);
+      mmHoveredIndex = -1;
+      infoEl.classList.remove('visible');
+    });
+
+    // Keep info card open when hovering over it
+    infoEl.addEventListener('mouseenter', () => { mmInfoHovered = true; });
+    infoEl.addEventListener('mouseleave', () => {
+      mmInfoHovered = false;
+      mmHoveredIndex = -1;
+      infoEl.classList.remove('visible');
+    });
+
+    // Mobile tap
+    wrapEl.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      const rect = wrapEl.getBoundingClientRect();
+      mmMouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+      mmMouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+    }, { passive: true });
+
+    // ── Intro pan state ──
+    let mmIntroPanning = false;
+    let mmIntroAngle = 0;
+    let mmLoading = false;
+    const MM_INTRO_DURATION = 6;
+    const MM_INTRO_RADIUS = 15;
+    const MM_INTRO_HEIGHT = 7;
+    const MM_INTRO_TARGET = new THREE.Vector3(0, 2.5, -2);
+
+    // ── Phase 1: Start loading when section first peeks into view ──
+    const mmSection = document.getElementById('mindmap');
+    let mmInitStarted = false;
+    let mmReadyToPlay = false;
+
+    const mmLoaderEl = document.getElementById('mindmapLoader');
+    const mmLoaderFill = document.getElementById('mindmapLoaderFill');
+
+    const mmPreloadObserver = new IntersectionObserver(async (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !mmInitStarted) {
+          mmInitStarted = true;
+          mmLoading = true;
+
+          initMindmap();
+          await loadMindmapModels();
+
+          // Hide loader
+          mmLoaderEl.style.opacity = '0';
+          setTimeout(() => { mmLoaderEl.style.display = 'none'; }, 500);
+
+          mmLoading = false;
+          mmReadyToPlay = true;
+          mmActive = true;
+          animateMindmap();
+
+          checkTriggerIntroPan();
+
+          mmPreloadObserver.disconnect();
+        }
+      }
+    }, { threshold: 0.1 });
+    mmPreloadObserver.observe(mmSection);
+
+    // ── Phase 2: Trigger intro pan when bottom of canvas is fully visible ──
+    let mmPanTriggered = false;
+
+    function checkTriggerIntroPan() {
+      if (mmPanTriggered || !mmReadyToPlay) return;
+      const rect = wrapEl.getBoundingClientRect();
+      // Bottom of canvas is above the bottom of viewport
+      if (rect.bottom <= window.innerHeight + 50) {
+        startIntroPan();
+      }
+    }
+
+    function startIntroPan() {
+      if (mmPanTriggered) return;
+      mmPanTriggered = true;
+      mmIntroPanning = true;
+      mmIntroAngle = 0;
+      if (mmControls) mmControls.enabled = false;
+    }
+
+    // Check on scroll
+    window.addEventListener('scroll', () => {
+      if (!mmPanTriggered && mmReadyToPlay) {
+        checkTriggerIntroPan();
+      }
+      // Scroll lock: if models are still loading and user scrolled to the section bottom,
+      // prevent scrolling past into the finale
+      if (mmLoading && mmInitStarted) {
+        const rect = mmSection.getBoundingClientRect();
+        if (rect.bottom < window.innerHeight + 100) {
+          window.scrollTo({ top: window.scrollY - 1 });
+        }
+      }
+    }, { passive: false });
+  </script>
+
+  <!-- ============================================================
        3D FINALE ENGINE
        ============================================================ -->
   <script type="module">
@@ -3157,7 +3764,8 @@
       }
 
       for (const [key, url] of entries) {
-        const model = await loader.loadAsync(url);
+        const cachedUrl = (window.__preloadCache && window.__preloadCache[url]) || url;
+        const model = await loader.loadAsync(cachedUrl);
 
         // FBX models from Mixamo are usually huge — scale down
         // ──────────────────────────────────────────────────
@@ -3462,6 +4070,10 @@
       document.body.style.overflow = '';
       document.body.classList.remove('in-space');
 
+      // Reveal signal section and footer
+      signalSection.style.visibility = '';
+      document.getElementById('siteFooter').style.visibility = '';
+
       // Scroll to signal/contact
       signalSection.scrollIntoView({ behavior: 'instant', block: 'start' });
 
@@ -3511,18 +4123,24 @@
     const finaleTrigger = document.getElementById('finale-trigger');
     let finaleTriggered = false;
 
-    const finaleObs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !finaleTriggered) {
-          // Don't trigger if space zone is active
-          if (document.body.classList.contains('in-space')) return;
-          finaleTriggered = true;
-          startFinale();
-        }
-      });
-    }, { threshold: 1.0 });
+    // Trigger finale when the finale-trigger element scrolls into view
+    // and the mindmap section is above the viewport
+    const mindmapEl = document.getElementById('mindmap');
 
-    finaleObs.observe(finaleTrigger);
+    function checkFinale() {
+      if (finaleTriggered) return;
+      if (document.body.classList.contains('in-space')) return;
+
+      const mmRect = mindmapEl.getBoundingClientRect();
+
+      // Fire when mindmap bottom is within top 40% of viewport (still partially visible)
+      if (mmRect.bottom < window.innerHeight * 0.4 && mmRect.bottom > -500) {
+        finaleTriggered = true;
+        startFinale();
+      }
+    }
+
+    window.addEventListener('scroll', checkFinale, { passive: true });
   </script>
 
 </body>
